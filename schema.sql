@@ -184,15 +184,16 @@ ALTER TABLE public.order_items       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews           ENABLE ROW LEVEL SECURITY;
 
 -- Helper to check the current user's role
-CREATE OR REPLACE FUNCTION auth.get_user_role()
+CREATE OR REPLACE FUNCTION public.get_user_role()
 RETURNS user_role
 LANGUAGE sql
-SECURITY DEFINER AS $$
-    SELECT role FROM public.profiles WHERE id = auth.uid();
+SECURITY DEFINER
+SET search_path = public AS $$
+  SELECT role FROM public.profiles WHERE id = auth.uid();
 $$;
 
 -- Grant execution to all users so they can perform RLS checks
-GRANT EXECUTE ON FUNCTION auth.get_user_role() TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.get_user_role() TO anon, authenticated, service_role;
 
 -- Profiles Policies
 DROP POLICY IF EXISTS "profiles_select_public" ON public.profiles;
@@ -200,20 +201,20 @@ CREATE POLICY "profiles_select_public" ON public.profiles FOR SELECT USING (true
 
 DROP POLICY IF EXISTS "profiles_update_own_or_admin" ON public.profiles;
 CREATE POLICY "profiles_update_own_or_admin" ON public.profiles FOR UPDATE
-USING (auth.uid() = id OR auth.get_user_role() = 'admin');
+USING (auth.uid() = id OR public.get_user_role() = 'admin');
 
 -- Products Policies
 DROP POLICY IF EXISTS "products_select_active_or_owner_or_admin" ON public.products;
 CREATE POLICY "products_select_active_or_owner_or_admin" ON public.products FOR SELECT
-USING (is_active = true OR auth.uid() = seller_id OR auth.get_user_role() = 'admin');
+USING (is_active = true OR auth.uid() = seller_id OR public.get_user_role() = 'admin');
 
 DROP POLICY IF EXISTS "products_insert_sellers_only" ON public.products;
 CREATE POLICY "products_insert_sellers_only" ON public.products FOR INSERT
-WITH CHECK (auth.get_user_role() = 'seller' AND auth.uid() = seller_id);
+WITH CHECK (public.get_user_role() = 'seller' AND auth.uid() = seller_id);
 
 DROP POLICY IF EXISTS "products_update_owner_or_admin" ON public.products;
 CREATE POLICY "products_update_owner_or_admin" ON public.products FOR UPDATE
-USING (auth.uid() = seller_id OR auth.get_user_role() = 'admin');
+USING (auth.uid() = seller_id OR public.get_user_role() = 'admin');
 
 -- Product Variations Policies
 DROP POLICY IF EXISTS "variations_select_all" ON public.product_variations;
@@ -222,7 +223,7 @@ CREATE POLICY "variations_select_all" ON public.product_variations FOR SELECT US
 DROP POLICY IF EXISTS "variations_write_seller_or_admin" ON public.product_variations;
 CREATE POLICY "variations_write_seller_or_admin" ON public.product_variations FOR ALL
 USING (
-    auth.get_user_role() = 'admin'
+    public.get_user_role() = 'admin'
     OR EXISTS (
         SELECT 1 FROM public.products p
         WHERE p.id = product_id AND p.seller_id = auth.uid()
@@ -241,7 +242,7 @@ DROP POLICY IF EXISTS "orders_select_customer_or_seller_or_admin" ON public.orde
 CREATE POLICY "orders_select_customer_or_seller_or_admin" ON public.orders FOR SELECT
 USING (
     auth.uid() = customer_id
-    OR auth.get_user_role() = 'admin'
+    OR public.get_user_role() = 'admin'
     OR EXISTS (
         SELECT 1 FROM public.order_items oi
         WHERE oi.order_id = id AND oi.seller_id = auth.uid()
@@ -255,7 +256,7 @@ WITH CHECK (auth.uid() = customer_id);
 DROP POLICY IF EXISTS "orders_update_seller_or_admin" ON public.orders;
 CREATE POLICY "orders_update_seller_or_admin" ON public.orders FOR UPDATE
 USING (
-    auth.get_user_role() = 'admin'
+    public.get_user_role() = 'admin'
     OR EXISTS (
         SELECT 1 FROM public.order_items oi
         WHERE oi.order_id = id AND oi.seller_id = auth.uid()
@@ -267,7 +268,7 @@ DROP POLICY IF EXISTS "order_items_select_related_parties" ON public.order_items
 CREATE POLICY "order_items_select_related_parties" ON public.order_items FOR SELECT
 USING (
     seller_id = auth.uid()
-    OR auth.get_user_role() = 'admin'
+    OR public.get_user_role() = 'admin'
     OR EXISTS (
         SELECT 1 FROM public.orders o
         WHERE o.id = order_id AND o.customer_id = auth.uid()

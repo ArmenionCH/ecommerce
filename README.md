@@ -35,7 +35,7 @@ Execute the SQL statements inside [schema.sql](file:///c:/Users/USER/Desktop/ant
 2. Database Tables (Profiles, Products, Variations, Cart Items, Orders, Order Items, Reviews)
 3. DB Triggers (`check_cart_stock_limits`, `deduct_product_stock`, `handle_new_user_registration`)
 4. Seller Analytics view and Performance indexes
-5. Row Level Security (RLS) policies and `auth.get_user_role()` function
+5. Row Level Security (RLS) policies and `public.get_user_role()` function
 6. Seeding mocks (Admin, Seller, Customer, Product, Variations)
 
 ### 4. Configuration

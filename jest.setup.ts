@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // jest.setup.ts
 
 // Mock environment variables
@@ -7,12 +8,17 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'mock-anon-key';
 // Mock Supabase JS client
 jest.mock('@supabase/supabase-js', () => {
   class SupabaseMockBuilder {
-    private tableName: string;
-    private isInsert: boolean = false;
-    private hasNegativeQuantity: boolean = false;
+    public tableName: string;
+    public isInsert: boolean = false;
+    public hasNegativeQuantity: boolean = false;
 
     constructor(tableName: string) {
       this.tableName = tableName;
+    }
+
+    reset() {
+      this.isInsert = false;
+      this.hasNegativeQuantity = false;
     }
 
     select() { return this; }
@@ -75,9 +81,17 @@ jest.mock('@supabase/supabase-js', () => {
     }
   }
 
+  const builders: Record<string, SupabaseMockBuilder> = {};
+
   return {
     createClient: jest.fn(() => ({
-      from: jest.fn((tableName) => new SupabaseMockBuilder(tableName)),
+      from: jest.fn((tableName) => {
+        if (!builders[tableName]) {
+          builders[tableName] = new SupabaseMockBuilder(tableName);
+        }
+        builders[tableName].reset();
+        return builders[tableName];
+      }),
       auth: {
         signUp: jest.fn().mockResolvedValue({ data: { user: { id: 'mock-id' } }, error: null }),
         signInWithPassword: jest.fn().mockResolvedValue({ data: { user: { id: 'mock-id' } }, error: null }),

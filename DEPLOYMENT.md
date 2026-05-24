@@ -11,10 +11,10 @@ This document outlines the step-by-step production checklist for deploying the G
    - Verify that all 7 tables have Row Level Security (RLS) enabled.
 
 2. **Role Helper Permissions**:
-   - Ensure the security definer function `auth.get_user_role()` exists in the `auth` schema.
+   - Ensure the security definer function `public.get_user_role()` exists in the `public` schema.
    - Run the execution grant command:
      ```sql
-     GRANT EXECUTE ON FUNCTION auth.get_user_role() TO anon, authenticated, service_role;
+     GRANT EXECUTE ON FUNCTION public.get_user_role() TO anon, authenticated, service_role;
      ```
 
 3. **Database Triggers**:
