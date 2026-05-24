@@ -140,6 +140,10 @@ CREATE TRIGGER tr_deduct_stock
 AFTER INSERT ON public.order_items
 FOR EACH ROW EXECUTE FUNCTION public.deduct_product_stock();
 
+-- Clean up old interfering registration triggers and functions
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DROP FUNCTION IF EXISTS auth.handle_new_user() CASCADE;
+
 -- Function: Automatically create a profile when a new user registers
 CREATE OR REPLACE FUNCTION public.handle_new_user_registration()
 RETURNS TRIGGER
