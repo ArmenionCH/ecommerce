@@ -5,6 +5,7 @@
 
 -- ── 1. EXTENSIONS & ENUMS ─────────────────────────────────────────────
 CREATE EXTENSION IF NOT EXISTS pg_trgm; -- Trigram search for Phase 2
+CREATE EXTENSION IF NOT EXISTS pgcrypto; -- Password hashing/salt generation
 
 DO $$ 
 BEGIN
@@ -308,6 +309,48 @@ CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON public.reviews(product_id);
 CREATE INDEX IF NOT EXISTS idx_products_title_trgm ON public.products USING GIN (title gin_trgm_ops);
 
 -- ── 7. SEED DATA ─────────────────────────────────────────────────────
+-- Seed auth.users first to satisfy foreign key constraints on public.profiles
+INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000001',
+        'admin@greenmarket.com',
+        crypt('adminpassword', gen_salt('bf')),
+        NOW(),
+        '{"provider": "email", "providers": ["email"]}'::jsonb,
+        '{"full_name": "Carlo System Admin", "role": "admin"}'::jsonb,
+        NOW(),
+        NOW(),
+        'authenticated',
+        'authenticated'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000002',
+        'seller@greenmarket.com',
+        crypt('sellerpassword', gen_salt('bf')),
+        NOW(),
+        '{"provider": "email", "providers": ["email"]}'::jsonb,
+        '{"full_name": "Juan Dela Cruz Greens", "role": "seller"}'::jsonb,
+        NOW(),
+        NOW(),
+        'authenticated',
+        'authenticated'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000003',
+        'customer@greenmarket.com',
+        crypt('customerpassword', gen_salt('bf')),
+        NOW(),
+        '{"provider": "email", "providers": ["email"]}'::jsonb,
+        '{"full_name": "Maria Clara TestBuyer", "role": "customer"}'::jsonb,
+        NOW(),
+        NOW(),
+        'authenticated',
+        'authenticated'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- Seed public.profiles with metadata, addresses, etc.
 INSERT INTO public.profiles (id, full_name, role, phone_number, delivery_address, metadata)
 VALUES
     (
@@ -334,7 +377,12 @@ VALUES
         'Subdivision Alpha, Block 4, Lot 2, Talisay City',
         '{"preferred_courier_notes": "Leave at front gate if not answering"}'::jsonb
     )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+    full_name        = EXCLUDED.full_name,
+    role             = EXCLUDED.role,
+    phone_number     = EXCLUDED.phone_number,
+    delivery_address = EXCLUDED.delivery_address,
+    metadata         = EXCLUDED.metadata;
 
 INSERT INTO public.products (id, seller_id, title, description, price, stock_quantity, image_url, is_active)
 VALUES (
