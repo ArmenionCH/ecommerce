@@ -36,7 +36,7 @@ export function useUserSession(): UserSession {
         .single();
 
       if (error) {
-        console.error('[GreenMarket] Failed to load profile:', error.message);
+        console.error('[MarketHub] Failed to load profile:', error.message);
       }
       setUser(profile ?? null);
       setLoading(false);

@@ -5,6 +5,7 @@ import { useProductLoader } from '@/features/products/hooks/useProductLoader';
 import { ProductGrid } from '@/features/products/components/ProductGrid';
 import { Input } from '@/components/ui/input';
 import { Search, Sparkles } from 'lucide-react';
+import { MarketplaceGate } from '@/features/auth/components/MarketplaceGate';
 
 export default function MarketplaceHome() {
   const { products, isLoading, loadFeed, searchProducts } = useProductLoader();
@@ -21,6 +22,7 @@ export default function MarketplaceHome() {
   };
 
   return (
+    <MarketplaceGate>
     <div className="space-y-10">
       {/* Premium Hero Banner */}
       <div className="relative rounded-3xl bg-linear-to-r from-emerald-600 to-teal-500 text-white p-8 sm:p-12 overflow-hidden shadow-sm">
@@ -32,10 +34,10 @@ export default function MarketplaceHome() {
             100% Cash On Delivery Marketplace
           </span>
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
-            Directly Sourced. Farm Fresh Harvests.
+            Everything You Need. One Marketplace.
           </h1>
           <p className="text-sm sm:text-base text-emerald-50 max-w-lg font-medium leading-relaxed">
-            Support local Filipino agriculture. Get organic greens, native herbs, and seasonal fruits harvested at sunrise, delivered to your door for ₱100 flat.
+            Discover deals from trusted sellers — electronics, fashion, home essentials, and more. Order with COD and ₱100 flat shipping.
           </p>
         </div>
       </div>
@@ -46,7 +48,7 @@ export default function MarketplaceHome() {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400" />
           <Input
             type="text"
-            placeholder="Search farm fresh harvests... (e.g. Batuan)"
+            placeholder="Search products, brands, categories..."
             value={searchQuery}
             onChange={handleSearchChange}
             className="pl-10 h-11"
@@ -54,16 +56,17 @@ export default function MarketplaceHome() {
         </div>
         <div className="flex gap-2 text-xs font-bold text-gray-500">
           <span className="px-3.5 py-2 rounded-xl bg-gray-50 border border-gray-100 text-emerald-700 font-extrabold cursor-pointer">
-            All produce
+            All products
           </span>
         </div>
       </div>
 
       {/* Marketplace Catalog Grid */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Today&apos;s Harvest List</h2>
+        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Recommended for you</h2>
         <ProductGrid products={products} isLoading={isLoading} />
       </div>
     </div>
+    </MarketplaceGate>
   );
 }

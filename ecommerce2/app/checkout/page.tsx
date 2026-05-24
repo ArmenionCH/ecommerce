@@ -74,7 +74,7 @@ export default function CheckoutTerminal() {
         <span className="text-5xl">🔒</span>
         <h3 className="text-xl font-bold text-gray-800">Checkout Guarded</h3>
         <p className="text-sm text-gray-500 max-w-xs mx-auto">
-          Please sign in as a customer to proceed with checking out harvests.
+          Please sign in as a customer to proceed to checkout.
         </p>
         <Link href="/" passHref legacyBehavior>
           <Button variant="outline" className="gap-1.5">
@@ -92,7 +92,7 @@ export default function CheckoutTerminal() {
         <span className="text-5xl">🛒</span>
         <h3 className="text-xl font-bold text-gray-800">Your Basket is Empty</h3>
         <p className="text-sm text-gray-500 max-w-xs mx-auto">
-          Add fresh organic produce to your basket before checking out.
+          Add items to your cart before checking out.
         </p>
         <Link href="/" passHref legacyBehavior>
           <Button variant="outline" className="gap-1.5">

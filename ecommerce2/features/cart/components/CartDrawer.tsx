@@ -60,10 +60,10 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           <div className="flex-1 overflow-y-auto px-6 py-2">
             {!user ? (
               <div className="flex flex-col items-center justify-center h-full text-center p-4">
-                <span className="text-4xl mb-4">🥬</span>
+                <span className="text-4xl mb-4">🛒</span>
                 <h4 className="font-bold text-gray-800">Please Sign In</h4>
                 <p className="text-sm text-gray-400 mt-2">
-                  Sign in to view your shopping basket and checkout fresh harvests.
+                  Sign in to view your cart and checkout.
                 </p>
               </div>
             ) : isLoading ? (
@@ -75,7 +75,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <span className="text-5xl mb-4">🛒</span>
                 <h4 className="font-bold text-gray-800">Your basket is empty</h4>
                 <p className="text-sm text-gray-400 mt-2 max-w-[240px] mx-auto">
-                  Browse local organic products and add them here to start shopping!
+                  Browse the marketplace and add items here to start shopping!
                 </p>
                 <Button size="sm" className="mt-6" onClick={onClose}>
                   Browse Marketplace

@@ -16,8 +16,8 @@ import * as z from 'zod';
 
 const productSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters' }),
-  description: z.string().min(10, { message: 'Please describe your harvest (min 10 characters)' }),
-  price: z.coerce.number().min(1, { message: 'Price must be at least ₱1.00' }),
+  description: z.string().min(10, { message: 'Please describe your product (min 10 characters)' }),
+  price: z.coerce.number().min(1, { message: 'Price must be at least ???1.00' }),
   stockQuantity: z.coerce.number().min(1, { message: 'Stock quantity must be at least 1 unit' }),
   imageUrl: z.string().url({ message: 'Must be a valid image URL' }).or(z.literal('')),
 });
@@ -123,15 +123,15 @@ export default function SellerInventoryPage() {
   if (!user || user.role !== 'seller') {
     return (
       <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 max-w-md mx-auto my-10 space-y-4">
-        <span className="text-5xl">🔒</span>
+        <span className="text-5xl">????</span>
         <h3 className="text-xl font-bold text-gray-800">Inventory Guarded</h3>
         <p className="text-sm text-gray-500 max-w-xs mx-auto">
-          Please sign in as a farmer/seller to manage product stock listings.
+          Please sign in as a seller to manage your product listings.
         </p>
-        <Link href="/" passHref legacyBehavior>
+        <Link href="/seller" passHref legacyBehavior>
           <Button variant="outline" className="gap-1.5">
             <ArrowLeft className="w-4 h-4" />
-            Back to marketplace
+            Back to dashboard
           </Button>
         </Link>
       </div>
@@ -200,7 +200,7 @@ export default function SellerInventoryPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Price (₱)</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Price (???)</label>
                   <Input
                     type="number"
                     placeholder="180"
@@ -250,7 +250,7 @@ export default function SellerInventoryPage() {
         </div>
       ) : products.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 max-w-lg mx-auto">
-          <span className="text-4xl">🥬</span>
+          <span className="text-4xl">????</span>
           <h3 className="text-lg font-bold text-gray-800 mt-4">No Harvests Listed</h3>
           <p className="text-sm text-gray-500 mt-2">
             You don&apos;t have any active produce listings. Click &quot;List New Harvest&quot; to publish your first crop.
@@ -278,7 +278,7 @@ export default function SellerInventoryPage() {
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
                           ) : (
-                            <span className="text-lg">🥬</span>
+                            <span className="text-lg">????</span>
                           )}
                         </div>
                         <div>

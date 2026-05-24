@@ -37,8 +37,8 @@ export function ProductGrid({ products, isLoading }: ProductGridProps) {
   if (products.length === 0) {
     return (
       <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-gray-200 max-w-lg mx-auto">
-        <span className="text-4xl">🥬</span>
-        <h3 className="text-lg font-bold text-gray-800 mt-4">No Harvests Found</h3>
+        <span className="text-4xl">📦</span>
+        <h3 className="text-lg font-bold text-gray-800 mt-4">No products found</h3>
         <p className="text-sm text-gray-500 mt-2">
           Check back later or try adjusting your search terms.
         </p>

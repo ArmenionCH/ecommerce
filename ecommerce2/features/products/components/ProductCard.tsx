@@ -58,8 +58,8 @@ export function ProductCard({ product }: ProductCardProps) {
             />
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center bg-linear-to-br from-emerald-500/10 to-teal-500/20 p-4 text-center">
-              <span className="text-4xl mb-2">🥬</span>
-              <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Fresh Harvest</span>
+              <span className="text-4xl mb-2">📦</span>
+              <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Product</span>
             </div>
           )}
 

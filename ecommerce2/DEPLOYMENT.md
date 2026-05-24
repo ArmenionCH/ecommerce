@@ -1,6 +1,6 @@
-# Green Market Deployment Guide 🚀
+# MarketHub Deployment Guide 🚀
 
-This document outlines the step-by-step production checklist for deploying the Green Market platform to **Vercel** and configuring the **Supabase** backend.
+This document outlines the step-by-step production checklist for deploying the MarketHub marketplace to **Vercel** and configuring the **Supabase** backend.
 
 ---
 
@@ -35,13 +35,13 @@ This document outlines the step-by-step production checklist for deploying the G
      ```bash
      git init
      git add .
-     git commit -m "feat: bootstrap green market v2.0"
+     git commit -m "feat: bootstrap markethub marketplace"
      ```
    - Push to your remote GitHub/GitLab repository.
 
 2. **Create Vercel Project**:
    - Sign in to [Vercel](https://vercel.com/) and click **Add New** -> **Project**.
-   - Import your Green Market repository.
+   - Import your MarketHub repository.
 
 3. **Configure Environment Variables**:
    - Under the **Environment Variables** section, add:

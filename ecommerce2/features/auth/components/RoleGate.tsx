@@ -5,6 +5,7 @@ import { useUserSession } from '../hooks/useUserSession';
 import type { UserRole } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { getHomePathForRole } from '@/lib/roleRoutes';
 
 interface RoleGateProps {
   children: React.ReactNode;
@@ -39,8 +40,8 @@ export function RoleGate({ children, allowedRoles, fallback }: RoleGateProps) {
         <p className="text-sm text-gray-500 mt-2 mb-6">
           You do not have the required permissions to view this page.
         </p>
-        <Link href="/" passHref legacyBehavior>
-          <Button variant="outline">Back to Marketplace</Button>
+        <Link href={getHomePathForRole(user?.role)} passHref legacyBehavior>
+          <Button variant="outline">Go to dashboard</Button>
         </Link>
       </div>
     );

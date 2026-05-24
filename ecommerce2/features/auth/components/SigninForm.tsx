@@ -54,7 +54,7 @@ export function SigninForm({ onSuccess, onToggleForm }: SigninFormProps) {
     <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl border border-gray-100 transition-all duration-300">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome Back</h2>
-        <p className="text-sm text-gray-500 mt-2">Sign in to your Green Market account</p>
+        <p className="text-sm text-gray-500 mt-2">Sign in to your MarketHub account</p>
         <p className="text-xs text-gray-400 mt-3 leading-relaxed">
           Demo: admin@greenmarket.com / adminpassword · seller@greenmarket.com / sellerpassword · customer@greenmarket.com / customerpassword
         </p>

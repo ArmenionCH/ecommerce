@@ -11,6 +11,8 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { SigninForm } from '@/features/auth/components/SigninForm';
 import { SignupForm } from '@/features/auth/components/SignupForm';
 import { CartDrawer } from '@/features/cart/components/CartDrawer';
+import { BRAND_EMOJI, BRAND_NAME } from '@/lib/branding';
+import { getHomePathForRole, canBrowseMarketplace } from '@/lib/roleRoutes';
 
 export function Navbar() {
   const { user, isAdmin, isSeller, isCustomer } = useUserSession();
@@ -28,23 +30,28 @@ export function Navbar() {
     window.location.reload();
   };
 
+  const homeHref = getHomePathForRole(user?.role);
+  const showMarketplace = canBrowseMarketplace(user?.role);
+
   return (
     <>
       <header className="sticky top-0 z-40 w-full border-b border-gray-100 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 transition-transform hover:scale-102">
+          <Link href={homeHref} className="flex items-center gap-2 transition-transform hover:scale-102">
             <span className="text-2xl font-extrabold tracking-tight bg-linear-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-              Green Market
+              {BRAND_NAME}
             </span>
-            <span className="text-xl">🥬</span>
+            <span className="text-xl">{BRAND_EMOJI}</span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/" className="text-sm font-semibold text-gray-600 hover:text-emerald-600 transition-colors">
-              Marketplace
-            </Link>
+            {showMarketplace && (
+              <Link href="/" className="text-sm font-semibold text-gray-600 hover:text-emerald-600 transition-colors">
+                Marketplace
+              </Link>
+            )}
 
             {user && (
               <>
@@ -127,13 +134,15 @@ export function Navbar() {
         {/* Mobile Dropdown Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-100 bg-white py-4 px-6 space-y-4 shadow-inner">
-            <Link
-              href="/"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="block text-base font-semibold text-gray-600 hover:text-emerald-600"
-            >
-              Marketplace
-            </Link>
+            {showMarketplace && (
+              <Link
+                href="/"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block text-base font-semibold text-gray-600 hover:text-emerald-600"
+              >
+                Marketplace
+              </Link>
+            )}
 
             {user ? (
               <>

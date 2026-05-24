@@ -15,8 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Green Market — Ultimate Farm-Fresh COD Marketplace',
-  description: 'Order organic fruits, local herbs, and fresh vegetables directly from local farmers. Secure Cash on Delivery (COD) and ₱100 flat-rate universal shipping.',
+  title: 'MarketHub — Online Marketplace (COD)',
+  description:
+    'Shop thousands of products from verified sellers. Cash on Delivery, flat ₱100 shipping, order tracking, and seller dashboards.',
 };
 
 export default function RootLayout({

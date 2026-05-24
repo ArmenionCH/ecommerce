@@ -84,6 +84,17 @@ export interface SellerAnalytics {
   completed_orders_count : number;
 }
 
+export interface ProductSalesReport {
+  product_id     : number;
+  title          : string;
+  list_price     : number;
+  stock_quantity : number;
+  is_active      : boolean;
+  units_sold     : number;
+  revenue        : number;
+  orders_count   : number;
+}
+
 /** Payload shape for order placement. Prices are NEVER trusted from this object. */
 export interface OrderPlacementPayload {
   customerId      : string;

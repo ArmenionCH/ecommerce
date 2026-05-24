@@ -70,7 +70,7 @@ export function SignupForm({ onSuccess, onToggleForm }: SignupFormProps) {
     <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl border border-gray-100 transition-all duration-300">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Create Account</h2>
-        <p className="text-sm text-gray-500 mt-2">Join Green Market today</p>
+        <p className="text-sm text-gray-500 mt-2">Create your MarketHub account</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -141,7 +141,7 @@ export function SignupForm({ onSuccess, onToggleForm }: SignupFormProps) {
                   : 'border-gray-200 hover:border-gray-300 text-gray-600 bg-white'
               }`}
             >
-              Buy Fresh Produce
+              Shop as buyer
             </button>
             <button
               type="button"
@@ -153,7 +153,7 @@ export function SignupForm({ onSuccess, onToggleForm }: SignupFormProps) {
                   : 'border-gray-200 hover:border-gray-300 text-gray-600 bg-white'
               }`}
             >
-              Sell My Harvests
+              Sell products
             </button>
           </div>
         </div>

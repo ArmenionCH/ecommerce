@@ -168,7 +168,7 @@ export default function AdminDashboardPage() {
                 type="product"
                 id={product.id}
                 title={product.title}
-                subtitle={`Listed by: ${product.profiles?.full_name || 'Unknown Farmer'}`}
+                subtitle={`Listed by: ${product.profiles?.full_name || 'Unknown seller'}`}
                 details={`Price: ${formatPrice(Number(product.price))} | In Stock: ${product.stock_quantity}`}
                 isModerated={product.is_active}
                 onApprove={async () => true}

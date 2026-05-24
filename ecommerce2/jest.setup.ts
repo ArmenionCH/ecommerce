@@ -47,7 +47,7 @@ jest.mock('@supabase/supabase-js', () => {
         return { data: { id: 101 }, error: null };
       }
       if (this.tableName === 'products') {
-        return { data: { id: 1, price: 180.00, title: 'Batuan', seller_id: '00000000-0000-0000-0000-000000000002' }, error: null };
+        return { data: { id: 1, price: 180.00, title: 'Wireless Earbuds', seller_id: '00000000-0000-0000-0000-000000000002' }, error: null };
       }
       return { data: { id: 1 }, error: null };
     }
@@ -62,7 +62,7 @@ jest.mock('@supabase/supabase-js', () => {
 
       if (this.tableName === 'products') {
         result = {
-          data: [{ id: 1, price: 180.00, title: 'Batuan', seller_id: '00000000-0000-0000-0000-000000000002' }],
+          data: [{ id: 1, price: 180.00, title: 'Wireless Earbuds', seller_id: '00000000-0000-0000-0000-000000000002' }],
           error: null,
         };
       } else if (this.tableName === 'reviews' && this.isInsert) {

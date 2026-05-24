@@ -1,6 +1,6 @@
-# Green Market 🥬
+# MarketHub 🛒
 
-Green Market is a production-grade, multi-vendor agricultural e-commerce platform built using **Next.js 16 (App Router)**, **TypeScript**, **Supabase (PostgreSQL + RLS)**, and **Tailwind CSS v4**. It implements strict security constraints for Cash on Delivery (COD) operations, flat shipping fees, and database-enforced warehouse inventory protections.
+MarketHub is a production-grade, multi-vendor online marketplace (Shopee/Lazada-style) built with **Next.js 16 (App Router)**, **TypeScript**, **Supabase (PostgreSQL + RLS)**, and **Tailwind CSS v4**. Buyers, sellers, and admins share one platform with COD checkout, flat shipping, cart, orders, reviews, and seller analytics.
 
 ---
 

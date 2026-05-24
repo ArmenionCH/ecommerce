@@ -43,7 +43,7 @@ export default function CustomerOrdersPage() {
     <div className="space-y-8 animate-in fade-in-50 duration-300">
       <div>
         <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Your Purchase Orders</h1>
-        <p className="text-sm text-gray-400 mt-1">Track your active farm shipments and view your transaction history in real-time.</p>
+        <p className="text-sm text-gray-400 mt-1">Track deliveries and view your order history in real time.</p>
       </div>
 
       <OrderStatusTabs orders={orders} isLoading={isOrdersLoading} />

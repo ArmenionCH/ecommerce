@@ -82,7 +82,7 @@ export default function AdminVerificationsPage() {
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Platform Overview
         </Link>
-        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight font-sans">Farmer Shop Vettings</h1>
+        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight font-sans">Seller verifications</h1>
         <p className="text-sm text-gray-400 mt-1">Vet registered vendor accounts before permitting public catalog listing.</p>
       </div>
 
@@ -94,7 +94,7 @@ export default function AdminVerificationsPage() {
             sellers.map((seller) => {
               const metadata = seller.metadata as { is_verified?: boolean; shop_name?: string } | undefined;
               const isVerified = !!metadata?.is_verified;
-              const shopName = metadata?.shop_name || 'Unnamed Local Farm';
+              const shopName = metadata?.shop_name || 'Unnamed shop';
 
               return (
                 <ModerationRow

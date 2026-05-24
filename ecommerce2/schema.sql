@@ -1,5 +1,5 @@
 -- =====================================================================
--- GREEN MARKET — DATABASE SCHEMA & INITIALIZATION SCRIPT
+-- MARKETHUB — DATABASE SCHEMA & INITIALIZATION SCRIPT
 -- Enforces COD Marketplace business logic, RLS isolation, and triggers.
 -- =====================================================================
 
@@ -414,11 +414,11 @@ VALUES
     ),
     (
         '00000000-0000-0000-0000-000000000002',
-        'Juan Dela Cruz Greens',
+        'Juan Dela Cruz',
         'seller',
         '+639184445566',
         'Bais City Agro-Hub, Negros Oriental',
-        '{"shop_name": "Juan Organic Farms", "is_verified": true, "shop_rating_default": 5.0}'::jsonb
+        '{"shop_name": "TechGear PH", "is_verified": true, "shop_rating_default": 5.0}'::jsonb
     ),
     (
         '00000000-0000-0000-0000-000000000003',
@@ -439,8 +439,8 @@ INSERT INTO public.products (id, seller_id, title, description, price, stock_qua
 VALUES (
     1,
     '00000000-0000-0000-0000-000000000002',
-    'Premium Native Batuan Fruit',
-    'Freshly harvested native Batuan fruit — organic, zero chemical preservatives.',
+    'Wireless Bluetooth Earbuds Pro',
+    'Noise-cancelling earbuds with 24h battery case, USB-C charging, and 1-year seller warranty.',
     180.00,
     25,
     'https://supabase.co/storage/v1/object/public/product-thumbnails/batuan.jpg',
@@ -450,6 +450,6 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.product_variations (id, product_id, name, value, price_modifier, stock_quantity)
 VALUES
-    (1, 1, 'Bundle Size', '500g Pack',      0.00, 15),
-    (2, 1, 'Bundle Size', '1kg Jumbo Pack', 150.00, 10)
+    (1, 1, 'Color', 'White',  0.00, 15),
+    (2, 1, 'Color', 'Black',  0.00, 10)
 ON CONFLICT (id) DO NOTHING;

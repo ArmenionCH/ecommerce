@@ -23,7 +23,7 @@ export function EarningsChart({ data }: EarningsChartProps) {
       <Card className="col-span-4 border border-gray-100 bg-white rounded-3xl">
         <CardHeader>
           <CardTitle>Earnings Overview</CardTitle>
-          <CardDescription>Monthly revenue collected from completed farm deliveries.</CardDescription>
+          <CardDescription>Monthly revenue from completed orders.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] w-full bg-gray-50 animate-pulse rounded-2xl" />
@@ -36,7 +36,7 @@ export function EarningsChart({ data }: EarningsChartProps) {
     <Card className="col-span-4 border border-gray-100 bg-white rounded-3xl animate-in fade-in-50 duration-200">
       <CardHeader>
         <CardTitle>Earnings Overview</CardTitle>
-        <CardDescription>Monthly revenue collected from completed farm deliveries.</CardDescription>
+        <CardDescription>Monthly revenue from completed orders.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-[300px] w-full">

@@ -132,7 +132,7 @@ export function ReviewSection({ productId }: ReviewSectionProps) {
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Your Feedback</span>
             <textarea
               rows={3}
-              placeholder="Share your experience with this harvest. How was the quality, packaging, and freshness?"
+              placeholder="Share your experience. How was the product quality, packaging, and delivery?"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               disabled={isSubmitting}

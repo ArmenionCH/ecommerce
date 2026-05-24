@@ -36,7 +36,7 @@ export function CartItemRow({ item, onUpdateQty, onRemove }: CartItemRowProps) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <span className="text-2xl">🥬</span>
+          <span className="text-2xl">📦</span>
         )}
       </div>
 

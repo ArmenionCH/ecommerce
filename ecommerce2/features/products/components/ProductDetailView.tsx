@@ -95,8 +95,8 @@ export function ProductDetailView({ product, variations }: ProductDetailViewProp
             />
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center bg-linear-to-br from-emerald-500/10 to-teal-500/20 p-8 text-center">
-              <span className="text-6xl mb-4">🥬</span>
-              <span className="text-base font-bold text-emerald-800 uppercase tracking-wider">Fresh Harvest Product</span>
+              <span className="text-6xl mb-4">📦</span>
+              <span className="text-base font-bold text-emerald-800 uppercase tracking-wider">Product listing</span>
             </div>
           )}
         </div>
@@ -106,7 +106,7 @@ export function ProductDetailView({ product, variations }: ProductDetailViewProp
           <div className="space-y-4">
             <div>
               <span className="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-wider mb-2">
-                Organic & Local
+                Verified seller
               </span>
               <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{product.title}</h1>
             </div>
@@ -116,7 +116,7 @@ export function ProductDetailView({ product, variations }: ProductDetailViewProp
             </div>
 
             <p className="text-sm text-gray-500 leading-relaxed">
-              {product.description || 'No product details are provided for this listing. Enjoy high quality organic produce straight from local farms.'}
+              {product.description || 'No description provided for this listing. Contact the seller if you need more details before ordering.'}
             </p>
 
             {/* Variations */}

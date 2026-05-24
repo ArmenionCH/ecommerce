@@ -26,7 +26,7 @@ export async function baseFeed(limit = 20): Promise<Product[]> {
     .limit(limit);
 
   if (error) {
-    console.error('[GreenMarket] baseFeed error:', error.message);
+    console.error('[MarketHub] baseFeed error:', error.message);
     return [];
   }
 
