@@ -1,13 +1,12 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/utils';
 import type { ProductSalesReport as ProductSalesRow } from '@/lib/types';
 import { BarChart3, Package } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { LinkButton } from '@/components/ui/link-button';
 
 interface ProductSalesReportProps {
   rows: ProductSalesRow[];
@@ -59,11 +58,9 @@ export function ProductSalesReport({ rows, isLoading, error }: ProductSalesRepor
           <div className="text-center py-16 px-6 space-y-3">
             <Package className="w-10 h-10 text-gray-300 mx-auto" />
             <p className="text-sm text-gray-500">No products yet. Add listings to start tracking sales.</p>
-            <Link href="/seller/inventory" legacyBehavior passHref>
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500">
-                Manage inventory
-              </Button>
-            </Link>
+            <LinkButton href="/seller/inventory" size="sm">
+              Manage inventory
+            </LinkButton>
           </div>
         ) : (
           <div className="overflow-x-auto">

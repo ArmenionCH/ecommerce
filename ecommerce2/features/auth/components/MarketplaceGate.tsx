@@ -9,33 +9,29 @@ interface MarketplaceGateProps {
   children: React.ReactNode;
 }
 
-/**
- * Renders marketplace content only for guests and customers.
- * Admins and sellers are redirected to their dashboards.
- */
 export function MarketplaceGate({ children }: MarketplaceGateProps) {
   const router = useRouter();
-  const { user, isLoading } = useUserSession();
+  const { user, isLoading, hasAuthSession } = useUserSession();
 
   useEffect(() => {
-    if (isLoading || !user) return;
-    if (!canBrowseMarketplace(user.role)) {
+    if (isLoading) return;
+    if (user && !canBrowseMarketplace(user.role)) {
       router.replace(getHomePathForRole(user.role));
     }
   }, [isLoading, user, router]);
 
-  if (isLoading) {
+  if (isLoading || (hasAuthSession && !user)) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-600" />
+      <div className="flex items-center justify-center min-h-[320px]">
+        <div className="animate-spin rounded-full h-9 w-9 border-2 border-emerald-600 border-t-transparent" />
       </div>
     );
   }
 
   if (user && !canBrowseMarketplace(user.role)) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-600" />
+      <div className="flex items-center justify-center min-h-[320px]">
+        <div className="animate-spin rounded-full h-9 w-9 border-2 border-emerald-600 border-t-transparent" />
       </div>
     );
   }

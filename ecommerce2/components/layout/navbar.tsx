@@ -27,7 +27,8 @@ export function Navbar() {
 
   const handleSignOut = async () => {
     await signOut();
-    window.location.reload();
+    setIsMobileMenuOpen(false);
+    window.location.href = '/';
   };
 
   const homeHref = getHomePathForRole(user?.role);

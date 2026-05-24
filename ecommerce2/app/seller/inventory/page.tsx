@@ -4,10 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { useUserSession } from '@/features/auth/hooks/useUserSession';
 import { supabaseClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
+import { LinkButton } from '@/components/ui/link-button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Trash2, ArrowLeft } from 'lucide-react';
+import { getHomePathForRole } from '@/lib/roleRoutes';
 import Link from 'next/link';
+import { Plus, Trash2, ArrowLeft } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import type { Product } from '@/lib/types';
 import { useForm, type Resolver } from 'react-hook-form';
@@ -17,7 +19,7 @@ import * as z from 'zod';
 const productSchema = z.object({
   title: z.string().min(3, { message: 'Title must be at least 3 characters' }),
   description: z.string().min(10, { message: 'Please describe your product (min 10 characters)' }),
-  price: z.coerce.number().min(1, { message: 'Price must be at least ???1.00' }),
+  price: z.coerce.number().min(1, { message: 'Price must be at least 1.00' }),
   stockQuantity: z.coerce.number().min(1, { message: 'Stock quantity must be at least 1 unit' }),
   imageUrl: z.string().url({ message: 'Must be a valid image URL' }).or(z.literal('')),
 });
@@ -25,7 +27,7 @@ const productSchema = z.object({
 type ProductFormData = z.infer<typeof productSchema>;
 
 export default function SellerInventoryPage() {
-  const { user, isLoading: isSessionLoading } = useUserSession();
+  const { user, isLoading: isSessionLoading, hasAuthSession } = useUserSession();
   const sellerId = user && user.role === 'seller' ? user.id : null;
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -112,7 +114,7 @@ export default function SellerInventoryPage() {
     }
   };
 
-  if (isSessionLoading) {
+  if (isSessionLoading || (hasAuthSession && !user)) {
     return (
       <div className="flex items-center justify-center min-h-[500px]">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-600"></div>
@@ -121,19 +123,17 @@ export default function SellerInventoryPage() {
   }
 
   if (!user || user.role !== 'seller') {
+    const home = user ? getHomePathForRole(user.role) : '/';
     return (
-      <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 max-w-md mx-auto my-10 space-y-4">
-        <span className="text-5xl">????</span>
-        <h3 className="text-xl font-bold text-gray-800">Inventory Guarded</h3>
+      <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm max-w-md mx-auto my-10 space-y-4 px-6">
+        <span className="text-4xl">??</span>
+        <h3 className="text-lg font-bold text-gray-900">Seller inventory only</h3>
         <p className="text-sm text-gray-500 max-w-xs mx-auto">
-          Please sign in as a seller to manage your product listings.
+          Sign in with a seller account to add and manage your product listings.
         </p>
-        <Link href="/seller" passHref legacyBehavior>
-          <Button variant="outline" className="gap-1.5">
-            <ArrowLeft className="w-4 h-4" />
-            Back to dashboard
-          </Button>
-        </Link>
+        <LinkButton href={home} variant="outline">
+          {user ? 'Go to my dashboard' : 'Back to marketplace'}
+        </LinkButton>
       </div>
     );
   }

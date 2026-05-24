@@ -113,11 +113,11 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </div>
               </div>
 
-              <Link href="/checkout" onClick={onClose} passHref legacyBehavior>
-                <Button className="w-full h-11 text-sm font-bold shadow-md shadow-emerald-100 hover:shadow-lg">
-                  Proceed to Checkout
-                </Button>
-              </Link>
+              <Button asChild className="w-full h-11 text-sm font-bold shadow-md shadow-emerald-100 hover:shadow-lg">
+                <Link href="/checkout" onClick={onClose}>
+                  Proceed to checkout
+                </Link>
+              </Button>
             </div>
           )}
 

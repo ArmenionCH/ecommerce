@@ -1,16 +1,28 @@
 import { supabaseClient } from '@/lib/supabase';
 import type { UserRole } from '@/lib/types';
+import { fetchProfileWithRetry } from './profileLoader';
+import { getHomePathForRole } from '@/lib/roleRoutes';
 
-export type AuthResult = { success: true } | { success: false; error: string };
+export type AuthResult =
+  | { success: true; needsEmailConfirmation: true }
+  | { success: true; needsEmailConfirmation: false; role: UserRole; redirectTo: string }
+  | { success: false; error: string };
 
-/**
- * Browser-side auth — persists session in localStorage via supabase-js.
- * Server actions cannot do this; they only authenticate an ephemeral server client.
- */
 export async function signIn(email: string, password: string): Promise<AuthResult> {
-  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
   if (error) return { success: false, error: error.message };
-  return { success: true };
+  if (!data.session) {
+    return { success: false, error: 'Sign-in succeeded but no session was created. Try again.' };
+  }
+
+  const profile = await fetchProfileWithRetry(data.session.user.id, data.session);
+  const role = profile?.role ?? 'customer';
+  return {
+    success: true,
+    needsEmailConfirmation: false,
+    role,
+    redirectTo: getHomePathForRole(role),
+  };
 }
 
 export async function signUp(
@@ -19,7 +31,7 @@ export async function signUp(
   fullName: string,
   role: UserRole,
 ): Promise<AuthResult> {
-  const { error } = await supabaseClient.auth.signUp({
+  const { data, error } = await supabaseClient.auth.signUp({
     email,
     password,
     options: {
@@ -27,10 +39,22 @@ export async function signUp(
     },
   });
   if (error) return { success: false, error: error.message };
-  return { success: true };
+
+  if (!data.session) {
+    return { success: true, needsEmailConfirmation: true };
+  }
+
+  const profile = await fetchProfileWithRetry(data.session.user.id, data.session);
+  const resolvedRole = profile?.role ?? role;
+  return {
+    success: true,
+    needsEmailConfirmation: false,
+    role: resolvedRole,
+    redirectTo: getHomePathForRole(resolvedRole),
+  };
 }
 
-export async function signOut(): Promise<AuthResult> {
+export async function signOut(): Promise<{ success: true } | { success: false; error: string }> {
   const { error } = await supabaseClient.auth.signOut();
   if (error) return { success: false, error: error.message };
   return { success: true };

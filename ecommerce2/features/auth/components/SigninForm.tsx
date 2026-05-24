@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -21,6 +22,7 @@ interface SigninFormProps {
 }
 
 export function SigninForm({ onSuccess, onToggleForm }: SigninFormProps) {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,11 +39,17 @@ export function SigninForm({ onSuccess, onToggleForm }: SigninFormProps) {
     setError(null);
     try {
       const res = await signIn(data.email, data.password);
-      if (res.success) {
-        if (onSuccess) onSuccess();
-      } else {
+      if (!res.success) {
         setError(res.error || 'Invalid credentials');
+        return;
       }
+      if (res.needsEmailConfirmation) {
+        setError('Please confirm your email before signing in.');
+        return;
+      }
+      onSuccess?.();
+      router.push(res.redirectTo);
+      router.refresh();
     } catch (err) {
       console.error('Sign in error:', err);
       setError('An unexpected error occurred. Please try again.');
@@ -51,72 +59,43 @@ export function SigninForm({ onSuccess, onToggleForm }: SigninFormProps) {
   };
 
   return (
-    <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl border border-gray-100 transition-all duration-300">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome Back</h2>
-        <p className="text-sm text-gray-500 mt-2">Sign in to your MarketHub account</p>
-        <p className="text-xs text-gray-400 mt-3 leading-relaxed">
-          Demo: admin@greenmarket.com / adminpassword · seller@greenmarket.com / sellerpassword · customer@greenmarket.com / customerpassword
-        </p>
+    <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-lg border border-gray-100/80">
+      <div className="text-center mb-7">
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Welcome back</h2>
+        <p className="text-sm text-gray-500 mt-1.5">Sign in to your MarketHub account</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {error && (
-          <div className="p-3.5 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl text-sm font-medium animate-pulse">
+          <div className="p-3 bg-rose-50 border border-rose-100 text-rose-700 rounded-lg text-sm">
             {error}
           </div>
         )}
 
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Email Address</label>
-          <Input
-            type="email"
-            placeholder="you@example.com"
-            error={!!errors.email}
-            disabled={isLoading}
-            {...register('email')}
-          />
-          {errors.email && (
-            <p className="text-xs text-rose-500 font-medium">{errors.email.message}</p>
-          )}
+          <label className="text-xs font-medium text-gray-600">Email</label>
+          <Input type="email" placeholder="you@example.com" error={!!errors.email} disabled={isLoading} {...register('email')} />
+          {errors.email && <p className="text-xs text-rose-500">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Password</label>
-          <Input
-            type="password"
-            placeholder="••••••••"
-            error={!!errors.password}
-            disabled={isLoading}
-            {...register('password')}
-          />
-          {errors.password && (
-            <p className="text-xs text-rose-500 font-medium">{errors.password.message}</p>
-          )}
+          <label className="text-xs font-medium text-gray-600">Password</label>
+          <Input type="password" placeholder="••••••••" error={!!errors.password} disabled={isLoading} {...register('password')} />
+          {errors.password && <p className="text-xs text-rose-500">{errors.password.message}</p>}
         </div>
 
-        <Button type="submit" className="w-full h-11 mt-2" disabled={isLoading}>
-          {isLoading ? (
-            <span className="inline-flex items-center gap-2">
-              <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              Signing in...
-            </span>
-          ) : (
-            'Sign In'
-          )}
+        <Button type="submit" className="w-full h-11" disabled={isLoading}>
+          {isLoading ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>
 
       {onToggleForm && (
-        <div className="mt-6 text-center text-sm text-gray-500">
-          Don&apos;t have an account?{' '}
-          <button onClick={onToggleForm} className="text-emerald-600 font-semibold hover:underline bg-transparent border-0 cursor-pointer">
-            Create Account
+        <p className="mt-5 text-center text-sm text-gray-500">
+          No account?{' '}
+          <button type="button" onClick={onToggleForm} className="text-emerald-600 font-semibold hover:underline">
+            Create one
           </button>
-        </div>
+        </p>
       )}
     </div>
   );

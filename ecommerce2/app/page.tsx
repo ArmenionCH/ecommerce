@@ -23,9 +23,8 @@ export default function MarketplaceHome() {
 
   return (
     <MarketplaceGate>
-    <div className="space-y-10">
-      {/* Premium Hero Banner */}
-      <div className="relative rounded-3xl bg-linear-to-r from-emerald-600 to-teal-500 text-white p-8 sm:p-12 overflow-hidden shadow-sm">
+    <div className="space-y-8">
+      <div className="relative rounded-2xl bg-linear-to-r from-emerald-600 to-teal-500 text-white p-8 sm:p-10 overflow-hidden shadow-md shadow-emerald-900/10">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))]" />
         
         <div className="relative max-w-2xl space-y-4">

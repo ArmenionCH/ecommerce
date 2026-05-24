@@ -1,78 +1,70 @@
 'use client';
 
-/**
- * USER SESSION HOOK
- *
- * Watches Supabase auth state changes. On login, fetches the user's
- * full profile (including role) from public.profiles. Provides a
- * unified session object to all components.
- *
- * SECURITY NOTE: The role comes from the database, NOT from the JWT.
- * This prevents role-spoofing via token manipulation.
- */
-
-import { useEffect, useState }  from 'react';
-import { supabaseClient }       from '@/lib/supabase';
-import type { Profile }         from '@/lib/types';
+import { useEffect, useState } from 'react';
+import type { Session } from '@supabase/supabase-js';
+import { supabaseClient } from '@/lib/supabase';
+import type { Profile } from '@/lib/types';
+import { fetchProfileWithRetry } from '../profileLoader';
 
 export interface UserSession {
-  user      : Profile | null;
-  isLoading : boolean;
-  isAdmin   : boolean;
-  isSeller  : boolean;
+  user: Profile | null;
+  isLoading: boolean;
+  hasAuthSession: boolean;
+  isAdmin: boolean;
+  isSeller: boolean;
   isCustomer: boolean;
 }
 
 export function useUserSession(): UserSession {
-  const [user, setUser]         = useState<Profile | null>(null);
-  const [isLoading, setLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<Profile | null>(null);
+  const [isLoading, setLoading] = useState(true);
+  const [hasAuthSession, setHasAuthSession] = useState(false);
 
   useEffect(() => {
-    const loadProfileForSession = async (userId: string) => {
-      const { data: profile, error } = await supabaseClient
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+    let cancelled = false;
 
-      if (error) {
-        console.error('[MarketHub] Failed to load profile:', error.message);
-      }
-      setUser(profile ?? null);
-      setLoading(false);
-    };
+    const applySession = async (session: Session | null) => {
+      if (cancelled) return;
 
-    const hydrateFromSession = async () => {
-      const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session?.user) {
+        setHasAuthSession(false);
         setUser(null);
         setLoading(false);
         return;
       }
-      await loadProfileForSession(session.user.id);
+
+      setHasAuthSession(true);
+      setLoading(true);
+      const profile = await fetchProfileWithRetry(session.user.id, session);
+      if (!cancelled) {
+        setUser(profile);
+        setLoading(false);
+      }
     };
 
-    void hydrateFromSession();
+    void (async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      await applySession(session);
+    })();
 
     const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
       async (_event, session) => {
-        if (!session?.user) {
-          setUser(null);
-          setLoading(false);
-          return;
-        }
-        await loadProfileForSession(session.user.id);
+        await applySession(session);
       },
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return {
     user,
     isLoading,
-    isAdmin   : user?.role === 'admin',
-    isSeller  : user?.role === 'seller',
+    hasAuthSession,
+    isAdmin: user?.role === 'admin',
+    isSeller: user?.role === 'seller',
     isCustomer: user?.role === 'customer',
   };
 }
