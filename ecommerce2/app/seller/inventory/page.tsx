@@ -10,7 +10,7 @@ import { Plus, Trash2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { formatPrice } from '@/lib/utils';
 import type { Product } from '@/lib/types';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
@@ -40,7 +40,7 @@ export default function SellerInventoryPage() {
     reset,
     formState: { errors },
   } = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+    resolver: zodResolver(productSchema) as Resolver<ProductFormData>,
   });
 
   const fetchInventory = React.useCallback(async () => {

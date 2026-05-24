@@ -23,6 +23,7 @@ export interface Product {
   image_url     : string | null;
   is_active     : boolean;
   created_at    : string;
+  profiles?     : Pick<Profile, 'full_name'> | null;
 }
 
 export interface ProductVariation {

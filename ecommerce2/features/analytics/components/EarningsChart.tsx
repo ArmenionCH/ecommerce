@@ -66,7 +66,7 @@ export function EarningsChart({ data }: EarningsChartProps) {
                 tickFormatter={(value) => `₱${value}`}
               />
               <Tooltip
-                formatter={(value: number) => [formatPrice(value), 'Earnings']}
+                formatter={(value: any) => [formatPrice(Number(value)), 'Earnings']}
                 contentStyle={{ background: '#fff', borderRadius: '12px', border: '1px solid #f3f4f6', fontSize: '12px' }}
               />
               <Bar dataKey="earnings" fill="#10b981" radius={[4, 4, 0, 0]} />
