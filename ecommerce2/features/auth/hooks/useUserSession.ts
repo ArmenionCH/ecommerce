@@ -28,7 +28,32 @@ export function useUserSession(): UserSession {
   const [isLoading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Subscribe to auth state changes
+    const loadProfileForSession = async (userId: string) => {
+      const { data: profile, error } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('[GreenMarket] Failed to load profile:', error.message);
+      }
+      setUser(profile ?? null);
+      setLoading(false);
+    };
+
+    const hydrateFromSession = async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session?.user) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      await loadProfileForSession(session.user.id);
+    };
+
+    void hydrateFromSession();
+
     const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
       async (_event, session) => {
         if (!session?.user) {
@@ -36,17 +61,8 @@ export function useUserSession(): UserSession {
           setLoading(false);
           return;
         }
-
-        // Fetch profile from DB — role from DB, not JWT
-        const { data: profile } = await supabaseClient
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        setUser(profile ?? null);
-        setLoading(false);
-      }
+        await loadProfileForSession(session.user.id);
+      },
     );
 
     return () => subscription.unsubscribe();

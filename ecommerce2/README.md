@@ -51,6 +51,16 @@ npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) to view the marketplace.
 
+### Demo accounts (after running `schema.sql`)
+
+| Role     | Email                    | Password          |
+|----------|--------------------------|-------------------|
+| Admin    | admin@greenmarket.com    | adminpassword     |
+| Seller   | seller@greenmarket.com   | sellerpassword    |
+| Customer | customer@greenmarket.com | customerpassword  |
+
+If demo logins show **Invalid credentials** or signup shows **Database error**, run [scripts/fix-auth-seed.sql](scripts/fix-auth-seed.sql) in the Supabase SQL Editor (adds required `auth.identities` rows and hardens the profile trigger).
+
 ---
 
 ## 🧪 Running Tests

@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { signIn } from '../actions';
+import { signIn } from '../authClient';
 
 const signinSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
@@ -55,6 +55,9 @@ export function SigninForm({ onSuccess, onToggleForm }: SigninFormProps) {
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome Back</h2>
         <p className="text-sm text-gray-500 mt-2">Sign in to your Green Market account</p>
+        <p className="text-xs text-gray-400 mt-3 leading-relaxed">
+          Demo: admin@greenmarket.com / adminpassword · seller@greenmarket.com / sellerpassword · customer@greenmarket.com / customerpassword
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

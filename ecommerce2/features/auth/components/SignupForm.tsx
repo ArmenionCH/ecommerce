@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { signUp } from '../actions';
+import { signUp } from '../authClient';
 
 const signupSchema = z.object({
   fullName: z.string().min(2, { message: 'Full name must be at least 2 characters' }),

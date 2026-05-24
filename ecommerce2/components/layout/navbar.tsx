@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ShoppingCart, LogOut, ShieldAlert, Store, ShoppingBag, Menu, X } from 'lucide-react';
 import { useUserSession } from '@/features/auth/hooks/useUserSession';
-import { signOut } from '@/features/auth/actions';
+import { signOut } from '@/features/auth/authClient';
 import { useCartActions } from '@/features/cart/hooks/useCartActions';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';

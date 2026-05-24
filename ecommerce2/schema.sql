@@ -156,7 +156,8 @@ BEGIN
         NEW.id,
         COALESCE(NEW.raw_user_meta_data ->> 'full_name', 'New User'),
         COALESCE((NEW.raw_user_meta_data ->> 'role')::user_role, 'customer')
-    );
+    )
+    ON CONFLICT (id) DO NOTHING;
     RETURN NEW;
 END;
 $$;
@@ -313,46 +314,92 @@ CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON public.reviews(product_id);
 CREATE INDEX IF NOT EXISTS idx_products_title_trgm ON public.products USING GIN (title gin_trgm_ops);
 
 -- ── 7. SEED DATA ─────────────────────────────────────────────────────
--- Seed auth.users first to satisfy foreign key constraints on public.profiles
-INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud)
-VALUES
-    (
-        '00000000-0000-0000-0000-000000000001',
-        'admin@greenmarket.com',
-        crypt('adminpassword', gen_salt('bf')),
-        NOW(),
-        '{"provider": "email", "providers": ["email"]}'::jsonb,
-        '{"full_name": "Carlo System Admin", "role": "admin"}'::jsonb,
-        NOW(),
-        NOW(),
-        'authenticated',
-        'authenticated'
-    ),
-    (
-        '00000000-0000-0000-0000-000000000002',
-        'seller@greenmarket.com',
-        crypt('sellerpassword', gen_salt('bf')),
-        NOW(),
-        '{"provider": "email", "providers": ["email"]}'::jsonb,
-        '{"full_name": "Juan Dela Cruz Greens", "role": "seller"}'::jsonb,
-        NOW(),
-        NOW(),
-        'authenticated',
-        'authenticated'
-    ),
-    (
-        '00000000-0000-0000-0000-000000000003',
-        'customer@greenmarket.com',
-        crypt('customerpassword', gen_salt('bf')),
-        NOW(),
-        '{"provider": "email", "providers": ["email"]}'::jsonb,
-        '{"full_name": "Maria Clara TestBuyer", "role": "customer"}'::jsonb,
-        NOW(),
-        NOW(),
-        'authenticated',
-        'authenticated'
+-- GoTrue requires auth.users + auth.identities for email/password login.
+DO $$
+DECLARE
+    v_instance_id UUID;
+BEGIN
+    SELECT id INTO v_instance_id FROM auth.instances LIMIT 1;
+    IF v_instance_id IS NULL THEN
+        v_instance_id := '00000000-0000-0000-0000-000000000000';
+    END IF;
+
+    INSERT INTO auth.users (
+        instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+        raw_app_meta_data, raw_user_meta_data, created_at, updated_at
     )
-ON CONFLICT (id) DO NOTHING;
+    VALUES
+        (
+            v_instance_id,
+            '00000000-0000-0000-0000-000000000001',
+            'authenticated',
+            'authenticated',
+            'admin@greenmarket.com',
+            crypt('adminpassword', gen_salt('bf')),
+            NOW(),
+            '{"provider": "email", "providers": ["email"]}'::jsonb,
+            '{"full_name": "Carlo System Admin", "role": "admin"}'::jsonb,
+            NOW(),
+            NOW()
+        ),
+        (
+            v_instance_id,
+            '00000000-0000-0000-0000-000000000002',
+            'authenticated',
+            'authenticated',
+            'seller@greenmarket.com',
+            crypt('sellerpassword', gen_salt('bf')),
+            NOW(),
+            '{"provider": "email", "providers": ["email"]}'::jsonb,
+            '{"full_name": "Juan Dela Cruz Greens", "role": "seller"}'::jsonb,
+            NOW(),
+            NOW()
+        ),
+        (
+            v_instance_id,
+            '00000000-0000-0000-0000-000000000003',
+            'authenticated',
+            'authenticated',
+            'customer@greenmarket.com',
+            crypt('customerpassword', gen_salt('bf')),
+            NOW(),
+            '{"provider": "email", "providers": ["email"]}'::jsonb,
+            '{"full_name": "Maria Clara TestBuyer", "role": "customer"}'::jsonb,
+            NOW(),
+            NOW()
+        )
+    ON CONFLICT (id) DO NOTHING;
+
+    INSERT INTO auth.identities (
+        id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at
+    )
+    VALUES
+        (
+            '00000000-0000-0000-0000-000000000011',
+            '00000000-0000-0000-0000-000000000001',
+            '00000000-0000-0000-0000-000000000001',
+            '{"sub": "00000000-0000-0000-0000-000000000001", "email": "admin@greenmarket.com"}'::jsonb,
+            'email',
+            NOW(), NOW(), NOW()
+        ),
+        (
+            '00000000-0000-0000-0000-000000000012',
+            '00000000-0000-0000-0000-000000000002',
+            '00000000-0000-0000-0000-000000000002',
+            '{"sub": "00000000-0000-0000-0000-000000000002", "email": "seller@greenmarket.com"}'::jsonb,
+            'email',
+            NOW(), NOW(), NOW()
+        ),
+        (
+            '00000000-0000-0000-0000-000000000013',
+            '00000000-0000-0000-0000-000000000003',
+            '00000000-0000-0000-0000-000000000003',
+            '{"sub": "00000000-0000-0000-0000-000000000003", "email": "customer@greenmarket.com"}'::jsonb,
+            'email',
+            NOW(), NOW(), NOW()
+        )
+    ON CONFLICT (provider_id, provider) DO NOTHING;
+END $$;
 
 -- Seed public.profiles with metadata, addresses, etc.
 INSERT INTO public.profiles (id, full_name, role, phone_number, delivery_address, metadata)
