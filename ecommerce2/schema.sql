@@ -151,11 +151,16 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public AS $$
 BEGIN
-    INSERT INTO public.profiles (id, full_name, role)
+    INSERT INTO public.profiles (id, full_name, role, metadata)
     VALUES (
         NEW.id,
         COALESCE(NEW.raw_user_meta_data ->> 'full_name', 'New User'),
-        COALESCE((NEW.raw_user_meta_data ->> 'role')::user_role, 'customer')
+        COALESCE((NEW.raw_user_meta_data ->> 'role')::user_role, 'customer'),
+        CASE
+            WHEN COALESCE((NEW.raw_user_meta_data ->> 'role')::user_role, 'customer') = 'seller'
+            THEN '{"is_verified": false, "verification_status": "pending"}'::jsonb
+            ELSE '{}'::jsonb
+        END
     )
     ON CONFLICT (id) DO NOTHING;
     RETURN NEW;
@@ -189,17 +194,65 @@ ALTER TABLE public.orders            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews           ENABLE ROW LEVEL SECURITY;
 
--- Helper to check the current user's role
+-- RLS helpers (SECURITY DEFINER — avoid infinite recursion between orders ↔ order_items)
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin');
+$$;
+
 CREATE OR REPLACE FUNCTION public.get_user_role()
 RETURNS user_role
 LANGUAGE sql
 SECURITY DEFINER
-SET search_path = public AS $$
+SET search_path = public
+STABLE
+AS $$
   SELECT role FROM public.profiles WHERE id = auth.uid();
 $$;
 
--- Grant execution to all users so they can perform RLS checks
+CREATE OR REPLACE FUNCTION public.user_owns_order(p_order_id bigint)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (SELECT 1 FROM public.orders WHERE id = p_order_id AND customer_id = auth.uid());
+$$;
+
+CREATE OR REPLACE FUNCTION public.user_sells_on_order(p_order_id bigint)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (SELECT 1 FROM public.order_items WHERE order_id = p_order_id AND seller_id = auth.uid());
+$$;
+
+CREATE OR REPLACE FUNCTION public.seller_is_verified(p_seller_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT COALESCE(
+    (SELECT (metadata->>'is_verified')::boolean FROM public.profiles WHERE id = p_seller_id AND role = 'seller'),
+    false
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.get_user_role() TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.user_owns_order(bigint) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.user_sells_on_order(bigint) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.seller_is_verified(uuid) TO anon, authenticated, service_role;
 
 -- Profiles Policies
 DROP POLICY IF EXISTS "profiles_select_public" ON public.profiles;
@@ -207,20 +260,27 @@ CREATE POLICY "profiles_select_public" ON public.profiles FOR SELECT USING (true
 
 DROP POLICY IF EXISTS "profiles_update_own_or_admin" ON public.profiles;
 CREATE POLICY "profiles_update_own_or_admin" ON public.profiles FOR UPDATE
-USING (auth.uid() = id OR public.get_user_role() = 'admin');
+USING (auth.uid() = id OR public.is_admin());
 
 -- Products Policies
 DROP POLICY IF EXISTS "products_select_active_or_owner_or_admin" ON public.products;
 CREATE POLICY "products_select_active_or_owner_or_admin" ON public.products FOR SELECT
-USING (is_active = true OR auth.uid() = seller_id OR public.get_user_role() = 'admin');
+USING (
+  auth.uid() = seller_id
+  OR public.is_admin()
+  OR (is_active = true AND public.seller_is_verified(seller_id))
+);
 
 DROP POLICY IF EXISTS "products_insert_sellers_only" ON public.products;
 CREATE POLICY "products_insert_sellers_only" ON public.products FOR INSERT
-WITH CHECK (public.get_user_role() = 'seller' AND auth.uid() = seller_id);
+WITH CHECK (
+  auth.uid() = seller_id
+  AND EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'seller')
+);
 
 DROP POLICY IF EXISTS "products_update_owner_or_admin" ON public.products;
 CREATE POLICY "products_update_owner_or_admin" ON public.products FOR UPDATE
-USING (auth.uid() = seller_id OR public.get_user_role() = 'admin');
+USING (auth.uid() = seller_id OR public.is_admin());
 
 -- Product Variations Policies
 DROP POLICY IF EXISTS "variations_select_all" ON public.product_variations;
@@ -229,7 +289,7 @@ CREATE POLICY "variations_select_all" ON public.product_variations FOR SELECT US
 DROP POLICY IF EXISTS "variations_write_seller_or_admin" ON public.product_variations;
 CREATE POLICY "variations_write_seller_or_admin" ON public.product_variations FOR ALL
 USING (
-    public.get_user_role() = 'admin'
+    public.is_admin()
     OR EXISTS (
         SELECT 1 FROM public.products p
         WHERE p.id = product_id AND p.seller_id = auth.uid()
@@ -248,11 +308,8 @@ DROP POLICY IF EXISTS "orders_select_customer_or_seller_or_admin" ON public.orde
 CREATE POLICY "orders_select_customer_or_seller_or_admin" ON public.orders FOR SELECT
 USING (
     auth.uid() = customer_id
-    OR public.get_user_role() = 'admin'
-    OR EXISTS (
-        SELECT 1 FROM public.order_items oi
-        WHERE oi.order_id = id AND oi.seller_id = auth.uid()
-    )
+    OR public.is_admin()
+    OR public.user_sells_on_order(id)
 );
 
 DROP POLICY IF EXISTS "orders_insert_customer_only" ON public.orders;
@@ -261,29 +318,21 @@ WITH CHECK (auth.uid() = customer_id);
 
 DROP POLICY IF EXISTS "orders_update_seller_or_admin" ON public.orders;
 CREATE POLICY "orders_update_seller_or_admin" ON public.orders FOR UPDATE
-USING (
-    public.get_user_role() = 'admin'
-    OR EXISTS (
-        SELECT 1 FROM public.order_items oi
-        WHERE oi.order_id = id AND oi.seller_id = auth.uid()
-    )
-);
+USING (public.is_admin() OR public.user_sells_on_order(id));
 
 -- Order Items Policies
 DROP POLICY IF EXISTS "order_items_select_related_parties" ON public.order_items;
 CREATE POLICY "order_items_select_related_parties" ON public.order_items FOR SELECT
 USING (
     seller_id = auth.uid()
-    OR public.get_user_role() = 'admin'
-    OR EXISTS (
-        SELECT 1 FROM public.orders o
-        WHERE o.id = order_id AND o.customer_id = auth.uid()
-    )
+    OR public.is_admin()
+    OR public.user_owns_order(order_id)
 );
 
 DROP POLICY IF EXISTS "order_items_insert_system_only" ON public.order_items;
-CREATE POLICY "order_items_insert_system_only" ON public.order_items FOR INSERT
-WITH CHECK (auth.uid() IS NOT NULL);
+DROP POLICY IF EXISTS "order_items_insert_customer_on_own_order" ON public.order_items;
+CREATE POLICY "order_items_insert_customer_on_own_order" ON public.order_items FOR INSERT
+WITH CHECK (public.user_owns_order(order_id));
 
 -- Reviews Policies
 DROP POLICY IF EXISTS "reviews_select_public" ON public.reviews;
@@ -406,26 +455,26 @@ INSERT INTO public.profiles (id, full_name, role, phone_number, delivery_address
 VALUES
     (
         '00000000-0000-0000-0000-000000000001',
-        'Carlo System Admin',
+        'System Admin',
         'admin',
         '+639171112233',
-        'Green Market Central HQ, Bacolod City',
+        'Marketplace HQ, Metro Manila',
         '{"is_super_user": true, "department": "Platform Security"}'::jsonb
     ),
     (
         '00000000-0000-0000-0000-000000000002',
-        'Juan Dela Cruz',
+        'John Seller',
         'seller',
         '+639184445566',
-        'Bais City Agro-Hub, Negros Oriental',
-        '{"shop_name": "TechGear PH", "is_verified": true, "shop_rating_default": 5.0}'::jsonb
+        'Quezon City, Metro Manila',
+        '{"shop_name": "TechStore PH", "is_verified": false}'::jsonb
     ),
     (
         '00000000-0000-0000-0000-000000000003',
-        'Maria Clara TestBuyer',
+        'Jane Customer',
         'customer',
         '+639197778899',
-        'Subdivision Alpha, Block 4, Lot 2, Talisay City',
+        'Makati City, Metro Manila',
         '{"preferred_courier_notes": "Leave at front gate if not answering"}'::jsonb
     )
 ON CONFLICT (id) DO UPDATE SET
@@ -439,11 +488,11 @@ INSERT INTO public.products (id, seller_id, title, description, price, stock_qua
 VALUES (
     1,
     '00000000-0000-0000-0000-000000000002',
-    'Wireless Bluetooth Earbuds Pro',
-    'Noise-cancelling earbuds with 24h battery case, USB-C charging, and 1-year seller warranty.',
+    'Wireless Bluetooth Earbuds',
+    'High-quality wireless earbuds with noise cancellation and long battery life.',
     180.00,
     25,
-    'https://supabase.co/storage/v1/object/public/product-thumbnails/batuan.jpg',
+    'https://supabase.co/storage/v1/object/public/product-thumbnails/earbuds.jpg',
     true
 )
 ON CONFLICT (id) DO NOTHING;

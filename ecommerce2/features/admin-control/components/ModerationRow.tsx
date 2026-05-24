@@ -61,11 +61,11 @@ export function ModerationRow({
             </span>
           ) : isModerated ? (
             <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-              Active / Verified
+              Approved · live on marketplace
             </span>
           ) : (
             <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
-              Pending Moderation
+              Pending approval
             </span>
           )}
         </div>
@@ -96,7 +96,7 @@ export function ModerationRow({
             className="text-rose-600 hover:text-rose-700 hover:bg-rose-50"
           >
             <Ban className="w-4 h-4 mr-1.5" />
-            {type === 'seller' ? 'Ban Seller' : 'Deactivate'}
+            {type === 'seller' ? 'Reject application' : 'Deactivate'}
           </Button>
         </div>
       )}

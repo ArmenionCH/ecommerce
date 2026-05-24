@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { getHomePathForRole } from '@/lib/roleRoutes';
 import Link from 'next/link';
-import { Plus, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Edit2 } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import type { Product } from '@/lib/types';
 import { useForm, type Resolver } from 'react-hook-form';
@@ -33,6 +33,8 @@ export default function SellerInventoryPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -40,6 +42,7 @@ export default function SellerInventoryPage() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema) as Resolver<ProductFormData>,
@@ -114,6 +117,44 @@ export default function SellerInventoryPage() {
     }
   };
 
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setValue('title', product.title);
+    setValue('description', product.description || '');
+    setValue('price', Number(product.price));
+    setValue('stockQuantity', product.stock_quantity);
+    setValue('imageUrl', product.image_url || '');
+    setIsEditOpen(true);
+  };
+
+  const handleUpdate = async (data: ProductFormData) => {
+    if (!editingProduct) return;
+    setIsSubmitting(true);
+    setErrorMsg(null);
+    try {
+      const { error } = await supabaseClient
+        .from('products')
+        .update({
+          title: data.title,
+          description: data.description,
+          price: data.price,
+          stock_quantity: data.stockQuantity,
+          image_url: data.imageUrl || null,
+        })
+        .eq('id', editingProduct.id);
+
+      if (error) throw error;
+      reset();
+      setEditingProduct(null);
+      setIsEditOpen(false);
+      await fetchInventory();
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to update product.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isSessionLoading || (hasAuthSession && !user)) {
     return (
       <div className="flex items-center justify-center min-h-[500px]">
@@ -147,20 +188,20 @@ export default function SellerInventoryPage() {
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to Seller Dashboard
           </Link>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight font-sans">Manage Harvest Stock</h1>
-          <p className="text-sm text-gray-400 mt-1">List new crops or adjust current warehouses storage limits.</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight font-sans">Manage Inventory</h1>
+          <p className="text-sm text-gray-400 mt-1">List new products or adjust current inventory.</p>
         </div>
 
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
           <DialogTrigger asChild>
             <Button className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 shadow-xs">
               <Plus className="w-4.5 h-4.5" />
-              List New Harvest
+              Add Product
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md p-6 border-0 bg-white rounded-3xl shadow-2xl">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold text-gray-900">List New Harvest</DialogTitle>
+              <DialogTitle className="text-xl font-bold text-gray-900">Add Product</DialogTitle>
             </DialogHeader>
 
             <form onSubmit={handleSubmit(handleAddProduct)} className="space-y-4 mt-2">
@@ -171,10 +212,10 @@ export default function SellerInventoryPage() {
               )}
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Harvest Title</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Product Title</label>
                 <Input
                   type="text"
-                  placeholder="e.g. Premium Native Batuan Fruit"
+                  placeholder="e.g. Wireless Bluetooth Earbuds"
                   error={!!errors.title}
                   disabled={isSubmitting}
                   {...register('title')}
@@ -183,10 +224,10 @@ export default function SellerInventoryPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Crop Description</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Description</label>
                 <textarea
                   rows={2}
-                  placeholder="Describe freshness, harvest location, package sizes, shelf life..."
+                  placeholder="Describe your product features, specifications, condition..."
                   disabled={isSubmitting}
                   className={`flex w-full rounded-xl border bg-white px-3 py-2 text-sm text-gray-900 transition-all duration-200 placeholder:text-gray-400 focus:outline-hidden focus:ring-2 ${
                     errors.description
@@ -200,7 +241,7 @@ export default function SellerInventoryPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Price (???)</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Price (₱)</label>
                   <Input
                     type="number"
                     placeholder="180"
@@ -224,7 +265,7 @@ export default function SellerInventoryPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Crop Image URL</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Image URL</label>
                 <Input
                   type="text"
                   placeholder="https://..."
@@ -236,7 +277,92 @@ export default function SellerInventoryPage() {
               </div>
 
               <Button type="submit" disabled={isSubmitting} className="w-full h-11 bg-emerald-600 hover:bg-emerald-500 mt-2">
-                {isSubmitting ? 'Submitting crop listing...' : 'Publish Listing'}
+                {isSubmitting ? 'Adding product...' : 'Publish Listing'}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setEditingProduct(null); reset(); } setIsEditOpen(open); }}>
+          <DialogContent className="sm:max-w-md p-6 border-0 bg-white rounded-3xl shadow-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-gray-900">Edit Product</DialogTitle>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit(handleUpdate)} className="space-y-4 mt-2">
+              {errorMsg && (
+                <div className="p-3 bg-rose-50 border border-rose-100 text-rose-600 text-xs font-semibold rounded-xl">
+                  {errorMsg}
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Product Title</label>
+                <Input
+                  type="text"
+                  placeholder="e.g. Wireless Bluetooth Earbuds"
+                  error={!!errors.title}
+                  disabled={isSubmitting}
+                  {...register('title')}
+                />
+                {errors.title && <p className="text-xs text-rose-500 font-medium">{errors.title.message}</p>}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Description</label>
+                <textarea
+                  rows={2}
+                  placeholder="Describe your product features, specifications, condition..."
+                  disabled={isSubmitting}
+                  className={`flex w-full rounded-xl border bg-white px-3 py-2 text-sm text-gray-900 transition-all duration-200 placeholder:text-gray-400 focus:outline-hidden focus:ring-2 ${
+                    errors.description
+                      ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-200/50'
+                      : 'border-gray-200 hover:border-gray-300 focus:border-emerald-500 focus:ring-emerald-200/50'
+                  }`}
+                  {...register('description')}
+                />
+                {errors.description && <p className="text-xs text-rose-500 font-medium">{errors.description.message}</p>}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Price (₱)</label>
+                  <Input
+                    type="number"
+                    placeholder="180"
+                    error={!!errors.price}
+                    disabled={isSubmitting}
+                    {...register('price')}
+                  />
+                  {errors.price && <p className="text-xs text-rose-500 font-medium">{errors.price.message}</p>}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Stock (Qty)</label>
+                  <Input
+                    type="number"
+                    placeholder="25"
+                    error={!!errors.stockQuantity}
+                    disabled={isSubmitting}
+                    {...register('stockQuantity')}
+                  />
+                  {errors.stockQuantity && <p className="text-xs text-rose-500 font-medium">{errors.stockQuantity.message}</p>}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Image URL</label>
+                <Input
+                  type="text"
+                  placeholder="https://..."
+                  error={!!errors.imageUrl}
+                  disabled={isSubmitting}
+                  {...register('imageUrl')}
+                />
+                {errors.imageUrl && <p className="text-xs text-rose-500 font-medium">{errors.imageUrl.message}</p>}
+              </div>
+
+              <Button type="submit" disabled={isSubmitting} className="w-full h-11 bg-emerald-600 hover:bg-emerald-500 mt-2">
+                {isSubmitting ? 'Updating product...' : 'Update Product'}
               </Button>
             </form>
           </DialogContent>
@@ -250,10 +376,10 @@ export default function SellerInventoryPage() {
         </div>
       ) : products.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 max-w-lg mx-auto">
-          <span className="text-4xl">????</span>
-          <h3 className="text-lg font-bold text-gray-800 mt-4">No Harvests Listed</h3>
+          <span className="text-4xl">📦</span>
+          <h3 className="text-lg font-bold text-gray-800 mt-4">No Products Listed</h3>
           <p className="text-sm text-gray-500 mt-2">
-            You don&apos;t have any active produce listings. Click &quot;List New Harvest&quot; to publish your first crop.
+            You don&apos;t have any active product listings. Click &quot;Add Product&quot; to publish your first product.
           </p>
         </div>
       ) : (
@@ -303,6 +429,13 @@ export default function SellerInventoryPage() {
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => handleEdit(product)}
+                          className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                          title="Edit product"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleDeactivate(product.id)}
                           className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"

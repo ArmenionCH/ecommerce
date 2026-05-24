@@ -6,7 +6,7 @@ import { useUserSession } from '@/features/auth/hooks/useUserSession';
 import { useCartActions } from '@/features/cart/hooks/useCartActions';
 import { DeliveryAddressForm, AddressFormData } from '@/features/checkout/components/DeliveryAddressForm';
 import { CheckoutSummaryCard } from '@/features/checkout/components/CheckoutSummaryCard';
-import { executeOrderPlacement } from '@/features/checkout/actions';
+import { placeOrderClient } from '@/features/checkout/checkoutClient';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -45,7 +45,7 @@ export default function CheckoutTerminal() {
     };
 
     try {
-      const res = await executeOrderPlacement(payload);
+      const res = await placeOrderClient(payload);
       if (res.success) {
         await clearCart();
         router.push('/orders');
