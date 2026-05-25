@@ -11,7 +11,6 @@ function parseRole(value: unknown): UserRole {
   return 'customer';
 }
 
-/** Build a temporary profile from auth metadata when the DB row is not ready yet. */
 export function profileFromSession(session: Session): Profile {
   const meta = session.user.user_metadata ?? {};
   return {
@@ -25,28 +24,50 @@ export function profileFromSession(session: Session): Profile {
   };
 }
 
-/** Fetch profile with retries — new signups often need a moment for the DB trigger. */
+/** Fetch profile with a hard timeout — never hangs the UI. */
 export async function fetchProfileWithRetry(
   userId: string,
   session?: Session | null,
-  maxAttempts = 6,
+  maxAttempts = 3,           // reduced from 6
 ): Promise<Profile | null> {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const { data: profile, error } = await supabaseClient
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
 
-    if (profile) return profile as Profile;
-    if (error && error.code !== 'PGRST116') {
-      console.error('[MarketHub] Profile fetch error:', error.message);
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const timeout = new Promise<null>((resolve) =>
+        setTimeout(() => resolve(null), 4000)
+      );
+
+      const query = supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      const result = await Promise.race([query, timeout]);
+
+      // timeout fired
+      if (result === null) {
+        console.warn(`[MarketHub] Profile attempt ${attempt + 1} timed out`);
+        continue;
+      }
+
+      const { data: profile, error } = result;
+
+      if (profile) return profile as Profile;
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('[MarketHub] Profile fetch error:', error.message);
+        break;
+      }
+    } catch (e) {
+      console.warn(`[MarketHub] Profile attempt ${attempt + 1} failed`, e);
     }
 
     if (attempt < maxAttempts - 1) {
-      await new Promise((resolve) => setTimeout(resolve, 250 * (attempt + 1)));
+      await new Promise((resolve) => setTimeout(resolve, 300));
     }
   }
 
+  // Always fall back to session metadata — never leave user stuck
   return session ? profileFromSession(session) : null;
 }
