@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { supabaseClient } from '@/lib/supabase';
-import { baseFeed } from '../utils/baseFeed';
+import { baseFeed, type SortOption, type ProductTypeFilter } from '../utils/baseFeed';
 import { textSimilarity } from '../utils/textSimilarity';
 import type { Product, ProductVariation } from '@/lib/types';
 import { usePageVisibility } from '@/components/layout/PageVisibilityProvider';
@@ -11,23 +11,25 @@ export function useProductLoader() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [productTypeFilter, setProductTypeFilter] = useState<ProductTypeFilter>('all');
   const isVisible = usePageVisibility();
 
-  const loadFeed = useCallback(async (limit = 20) => {
+  const loadFeed = useCallback(async (limit = 20, sortOption?: SortOption, productType?: ProductTypeFilter) => {
     // Don't load if tab is hidden
     if (!isVisible) return;
 
     setIsLoading(true);
     setError(null);
     try {
-      const feed = await baseFeed(limit);
+      const feed = await baseFeed(limit, sortOption || sortBy, productType || productTypeFilter);
       setProducts(feed);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load product feed.');
     } finally {
       setIsLoading(false);
     }
-  }, [isVisible]);
+  }, [isVisible, sortBy, productTypeFilter]);
 
   const searchProducts = useCallback(async (queryText: string) => {
     // Don't search if tab is hidden
@@ -104,5 +106,9 @@ export function useProductLoader() {
     loadFeed,
     searchProducts,
     loadProductWithVariations,
+    sortBy,
+    setSortBy,
+    productTypeFilter,
+    setProductTypeFilter,
   };
 }

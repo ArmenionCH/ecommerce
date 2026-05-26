@@ -85,7 +85,7 @@ export function SignupForm({ onSuccess, onToggleForm }: SignupFormProps) {
         )}
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-gray-600">Full name</label>
+          <label className="text-xs font-medium text-gray-600">Seller/Shop name</label>
           <Input type="text" placeholder="Your name" error={!!errors.fullName} disabled={isLoading} {...register('fullName')} />
           {errors.fullName && <p className="text-xs text-rose-500">{errors.fullName.message}</p>}
         </div>

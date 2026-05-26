@@ -22,6 +22,7 @@ const productSchema = z.object({
   price: z.coerce.number().min(1, { message: 'Price must be at least 1.00' }),
   stockQuantity: z.coerce.number().min(1, { message: 'Stock quantity must be at least 1 unit' }),
   imageUrl: z.string().url({ message: 'Must be a valid image URL' }).or(z.literal('')),
+  productType: z.string().min(1, { message: 'Product type is required' }),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -37,6 +38,8 @@ export default function SellerInventoryPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const {
     register,
@@ -75,6 +78,34 @@ export default function SellerInventoryPage() {
     }
   }, [sellerId, fetchInventory]);
 
+  const handleImageUpload = async (file: File) => {
+    if (!sellerId) return;
+    setIsUploading(true);
+    setErrorMsg(null);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${sellerId}/${Date.now()}.${fileExt}`;
+      const { data: uploadData, error: uploadError } = await supabaseClient
+        .storage
+        .from('product-images')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabaseClient
+        .storage
+        .from('product-images')
+        .getPublicUrl(fileName);
+
+      setUploadedImageUrl(publicUrl);
+      setValue('imageUrl', publicUrl);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Failed to upload image.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleAddProduct = async (data: ProductFormData) => {
     if (!sellerId) return;
     setIsSubmitting(true);
@@ -88,10 +119,12 @@ export default function SellerInventoryPage() {
         stock_quantity: data.stockQuantity,
         image_url: data.imageUrl || null,
         is_active: true,
+        product_type: data.productType,
       });
 
       if (error) throw error;
       reset();
+      setUploadedImageUrl(null);
       setIsAddOpen(false);
       await fetchInventory();
     } catch (err) {
@@ -124,6 +157,7 @@ export default function SellerInventoryPage() {
     setValue('price', Number(product.price));
     setValue('stockQuantity', product.stock_quantity);
     setValue('imageUrl', product.image_url || '');
+    setValue('productType', product.product_type || '');
     setIsEditOpen(true);
   };
 
@@ -140,11 +174,13 @@ export default function SellerInventoryPage() {
           price: data.price,
           stock_quantity: data.stockQuantity,
           image_url: data.imageUrl || null,
+          product_type: data.productType,
         })
         .eq('id', editingProduct.id);
 
       if (error) throw error;
       reset();
+      setUploadedImageUrl(null);
       setEditingProduct(null);
       setIsEditOpen(false);
       await fetchInventory();
@@ -265,14 +301,63 @@ export default function SellerInventoryPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Image URL</label>
-                <Input
-                  type="text"
-                  placeholder="https://..."
-                  error={!!errors.imageUrl}
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Product Type</label>
+                <select
                   disabled={isSubmitting}
-                  {...register('imageUrl')}
-                />
+                  className={`flex w-full rounded-xl border bg-white px-3 py-2 text-sm text-gray-900 transition-all duration-200 placeholder:text-gray-400 focus:outline-hidden focus:ring-2 ${
+                    errors.productType
+                      ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-200/50'
+                      : 'border-gray-200 hover:border-gray-300 focus:border-emerald-500 focus:ring-emerald-200/50'
+                  }`}
+                  {...register('productType')}
+                >
+                  <option value="">Select product type</option>
+                  <option value="electronics">Electronics</option>
+                  <option value="clothing">Clothing</option>
+                  <option value="home">Home & Garden</option>
+                  <option value="sports">Sports & Outdoors</option>
+                  <option value="toys">Toys & Games</option>
+                  <option value="books">Books</option>
+                  <option value="food">Food & Grocery</option>
+                  <option value="other">Other</option>
+                </select>
+                {errors.productType && <p className="text-xs text-rose-500 font-medium">{errors.productType.message}</p>}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Product Image</label>
+                <div className="space-y-2">
+                  <Input
+                    type="text"
+                    placeholder="https://..."
+                    error={!!errors.imageUrl}
+                    disabled={isSubmitting}
+                    {...register('imageUrl')}
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400">or</span>
+                    <label className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload(file);
+                        }}
+                        disabled={isUploading || isSubmitting}
+                        className="hidden"
+                      />
+                      <div className="px-3.5 py-2 rounded-xl bg-gray-50 border border-gray-100 text-xs font-bold text-gray-700 text-center cursor-pointer hover:bg-gray-100 transition-colors">
+                        {isUploading ? 'Uploading...' : 'Upload Image'}
+                      </div>
+                    </label>
+                  </div>
+                  {uploadedImageUrl && (
+                    <div className="mt-2">
+                      <img src={uploadedImageUrl} alt="Uploaded" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                    </div>
+                  )}
+                </div>
                 {errors.imageUrl && <p className="text-xs text-rose-500 font-medium">{errors.imageUrl.message}</p>}
               </div>
 
@@ -350,14 +435,63 @@ export default function SellerInventoryPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Image URL</label>
-                <Input
-                  type="text"
-                  placeholder="https://..."
-                  error={!!errors.imageUrl}
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Product Type</label>
+                <select
                   disabled={isSubmitting}
-                  {...register('imageUrl')}
-                />
+                  className={`flex w-full rounded-xl border bg-white px-3 py-2 text-sm text-gray-900 transition-all duration-200 placeholder:text-gray-400 focus:outline-hidden focus:ring-2 ${
+                    errors.productType
+                      ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-200/50'
+                      : 'border-gray-200 hover:border-gray-300 focus:border-emerald-500 focus:ring-emerald-200/50'
+                  }`}
+                  {...register('productType')}
+                >
+                  <option value="">Select product type</option>
+                  <option value="electronics">Electronics</option>
+                  <option value="clothing">Clothing</option>
+                  <option value="home">Home & Garden</option>
+                  <option value="sports">Sports & Outdoors</option>
+                  <option value="toys">Toys & Games</option>
+                  <option value="books">Books</option>
+                  <option value="food">Food & Grocery</option>
+                  <option value="other">Other</option>
+                </select>
+                {errors.productType && <p className="text-xs text-rose-500 font-medium">{errors.productType.message}</p>}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Product Image</label>
+                <div className="space-y-2">
+                  <Input
+                    type="text"
+                    placeholder="https://..."
+                    error={!!errors.imageUrl}
+                    disabled={isSubmitting}
+                    {...register('imageUrl')}
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400">or</span>
+                    <label className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload(file);
+                        }}
+                        disabled={isUploading || isSubmitting}
+                        className="hidden"
+                      />
+                      <div className="px-3.5 py-2 rounded-xl bg-gray-50 border border-gray-100 text-xs font-bold text-gray-700 text-center cursor-pointer hover:bg-gray-100 transition-colors">
+                        {isUploading ? 'Uploading...' : 'Upload Image'}
+                      </div>
+                    </label>
+                  </div>
+                  {uploadedImageUrl && (
+                    <div className="mt-2">
+                      <img src={uploadedImageUrl} alt="Uploaded" className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+                    </div>
+                  )}
+                </div>
                 {errors.imageUrl && <p className="text-xs text-rose-500 font-medium">{errors.imageUrl.message}</p>}
               </div>
 

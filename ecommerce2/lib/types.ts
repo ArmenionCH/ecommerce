@@ -22,6 +22,7 @@ export interface Product {
   stock_quantity: number;
   image_url     : string | null;
   is_active     : boolean;
+  product_type  : string | null;
   created_at    : string;
   profiles?     : Pick<Profile, 'full_name'> | null;
 }
