@@ -1,6 +1,6 @@
 /** App-wide brand strings — update here to rebrand the marketplace. */
 
-export const BRAND_NAME = 'MarketHub';
+export const BRAND_NAME = 'ACertain';
 export const BRAND_EMOJI = '🛒';
 
 export const BRAND_TAGLINE =
