@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, Eye, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Eye, AlertCircle, CheckCircle } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useCartActions } from '@/features/cart/hooks/useCartActions';
 import { useUserSession } from '@/features/auth/hooks/useUserSession';
+import { trackProductView } from '@/features/analytics/utils/trackProductView';
 
 interface ProductCardProps {
   product: Product;
@@ -19,6 +20,11 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCartActions(user && user.role === 'customer' ? user.id : null);
   const [isAdding, setIsAdding] = useState(false);
   const [imageError, setImageError] = useState(false);
+
+  // Track product view when card is rendered
+  useEffect(() => {
+    trackProductView(product.id);
+  }, [product.id]);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigating to detail page
@@ -90,6 +96,9 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.profiles?.full_name && (
               <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                 <span className="font-semibold">by</span> {product.profiles.full_name}
+                {(product.profiles as any).is_verified && (
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                )}
               </p>
             )}
           </div>

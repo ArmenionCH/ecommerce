@@ -5,6 +5,7 @@ import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { PageVisibilityProvider } from '@/components/layout/PageVisibilityProvider';
 import { UserSessionProvider } from '@/features/auth/hooks/useUserSession';
+import { BannedUserGate } from '@/features/auth/components/BannedUserGate';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -35,11 +36,13 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 font-sans">
         <PageVisibilityProvider>
           <UserSessionProvider>
-            <Navbar />
-            <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-              {children}
-            </main>
-            <Footer />
+            <BannedUserGate>
+              <Navbar />
+              <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+                {children}
+              </main>
+              <Footer />
+            </BannedUserGate>
           </UserSessionProvider>
         </PageVisibilityProvider>
       </body>

@@ -14,6 +14,7 @@ export interface UserSession {
   isAdmin: boolean;
   isSeller: boolean;
   isCustomer: boolean;
+  isBanned: boolean;
 }
 
 const UserSessionContext = createContext<UserSession | null>(null);
@@ -97,6 +98,7 @@ export function UserSessionProvider({ children }: { children: React.ReactNode })
     isAdmin: user?.role === 'admin',
     isSeller: user?.role === 'seller',
     isCustomer: user?.role === 'customer',
+    isBanned: user?.is_banned || false,
   };
 
   return (

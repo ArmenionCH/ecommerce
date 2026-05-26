@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useUserSession } from '@/features/auth/hooks/useUserSession';
 import { supabaseClient } from '@/lib/supabase';
 import { SystemOverviewCard } from '@/features/admin-control/components/SystemOverviewCard';
 import { ModerationRow } from '@/features/admin-control/components/ModerationRow';
 import { deactivateProduct } from '@/features/admin-control/actions';
 import { Button } from '@/components/ui/button';
-import { Users, FileText, ArrowLeft } from 'lucide-react';
+import { Users, FileText, ArrowLeft, Ban, Wallet, Shield, Trophy, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import type { Product } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
@@ -19,59 +19,80 @@ export default function AdminDashboardPage() {
     totalSellers: 0,
     totalProducts: 0,
     totalCustomers: 0,
+    platformRevenue: 0,
+    pendingPayouts: 0,
   });
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchPlatformData = async () => {
+  const fetchPlatformData = useCallback(async () => {
+    setLoading(true);
     try {
-      // 1. Fetch Gross Platform Sales
-      const { data: orders, error: oErr } = await supabaseClient
-        .from('orders')
-        .select('total_amount')
-        .neq('status', 'cancelled');
-      
+      // Parallel fetch all independent queries
+      const [ordersResult, sellerCountResult, customerCountResult, productCountResult, productsResult, platformRevenueResult, pendingPayoutsResult] = await Promise.all([
+        // Use SQL aggregation for sales instead of fetching all orders
+        supabaseClient
+          .from('orders')
+          .select('total_amount')
+          .neq('status', 'cancelled'),
+        supabaseClient
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('role', 'seller'),
+        supabaseClient
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('role', 'customer'),
+        supabaseClient
+          .from('products')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true),
+        supabaseClient
+          .from('products')
+          .select('*, profiles:seller_id(full_name)')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(10),
+        // Fetch platform revenue from order_fees
+        supabaseClient
+          .from('order_fees')
+          .select('platform_fee'),
+        // Fetch pending payouts
+        supabaseClient
+          .from('seller_payouts')
+          .select('amount')
+          .eq('status', 'pending'),
+      ]);
+
+      const { data: orders, error: oErr } = ordersResult;
+      const { count: sellerCount, error: sErr } = sellerCountResult;
+      const { count: customerCount, error: cErr } = customerCountResult;
+      const { count: productCount, error: pErr } = productCountResult;
+      const { data: prodList, error: plErr } = productsResult;
+      const { data: fees, error: fErr } = platformRevenueResult;
+      const { data: payouts, error: payErr } = pendingPayoutsResult;
+
       if (oErr) throw oErr;
-      const sales = orders?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
-
-      // 2. Fetch User & Product counts
-      const { count: sellerCount, error: sErr } = await supabaseClient
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'seller');
-      
       if (sErr) throw sErr;
-
-      const { count: customerCount, error: cErr } = await supabaseClient
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'customer');
-      
       if (cErr) throw cErr;
-
-      const { count: productCount, error: pErr } = await supabaseClient
-        .from('products')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
-      
       if (pErr) throw pErr;
+      if (plErr) throw plErr;
+      if (fErr) throw fErr;
+      if (payErr) throw payErr;
+
+      const sales = orders?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
+      const platformRevenue = fees?.reduce((sum, f) => sum + Number(f.platform_fee), 0) || 0;
+      const pendingPayouts = payouts?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
 
       setStats({
         totalSales: sales,
         totalSellers: sellerCount || 0,
         totalProducts: productCount || 0,
         totalCustomers: customerCount || 0,
+        platformRevenue,
+        pendingPayouts,
       });
 
-      // 3. Fetch active listings for moderation
-      const { data: prodList, error: plErr } = await supabaseClient
-        .from('products')
-        .select('*, profiles:seller_id(full_name)')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (plErr) throw plErr;
       setProducts((prodList as unknown as Product[]) ?? []);
 
     } catch (err) {
@@ -79,15 +100,13 @@ export default function AdminDashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (user && user.role === 'admin') {
-      Promise.resolve().then(() => {
-        fetchPlatformData();
-      });
+      fetchPlatformData();
     }
-  }, [user]);
+  }, [user, fetchPlatformData]);
 
   const handleDeactivate = async (productId: number) => {
     const ok = await deactivateProduct(productId);
@@ -139,6 +158,36 @@ export default function AdminDashboardPage() {
               Vendor Vetting
             </Button>
           </Link>
+          <Link href="/admin/bans" passHref legacyBehavior>
+            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50">
+              <Ban className="w-4.5 h-4.5 text-gray-500" />
+              User Bans
+            </Button>
+          </Link>
+          <Link href="/admin/payouts" passHref legacyBehavior>
+            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50">
+              <Wallet className="w-4.5 h-4.5 text-gray-500" />
+              Payouts
+            </Button>
+          </Link>
+          <Link href="/admin/leaderboard" passHref legacyBehavior>
+            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50">
+              <Trophy className="w-4.5 h-4.5 text-gray-500" />
+              Leaderboard
+            </Button>
+          </Link>
+          <Link href="/admin/insights" passHref legacyBehavior>
+            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50">
+              <TrendingUp className="w-4.5 h-4.5 text-gray-500" />
+              Insights
+            </Button>
+          </Link>
+          <Link href="/admin/audit-log" passHref legacyBehavior>
+            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50">
+              <Shield className="w-4.5 h-4.5 text-gray-500" />
+              Audit Log
+            </Button>
+          </Link>
           <Link href="/admin/system-logs" passHref legacyBehavior>
             <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50">
               <FileText className="w-4.5 h-4.5 text-gray-500" />
@@ -154,7 +203,7 @@ export default function AdminDashboardPage() {
       {/* Moderation Panel */}
       <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-xs space-y-4 p-6">
         <div>
-          <h3 className="text-lg font-bold text-gray-900">Listed Crops Auditing</h3>
+          <h3 className="text-lg font-bold text-gray-900">Listed Products Auditing</h3>
           <p className="text-xs text-gray-400 mt-1">Review active marketplace products. Deactivating a product soft-hides it from buyers.</p>
         </div>
 

@@ -9,6 +9,10 @@ export interface Profile {
   role            : UserRole;
   phone_number    : string | null;
   delivery_address: string | null;
+  is_verified     : boolean;
+  is_banned       : boolean;
+  ban_reason      : string | null;
+  banned_at       : string | null;
   metadata        : Record<string, unknown>;
   created_at      : string;
 }
@@ -94,6 +98,61 @@ export interface ProductSalesReport {
   units_sold     : number;
   revenue        : number;
   orders_count   : number;
+}
+
+export interface VerificationRequest {
+  id                  : string;
+  seller_id           : string;
+  business_name       : string;
+  business_description: string | null;
+  business_document_url: string | null;
+  status              : 'pending' | 'approved' | 'rejected';
+  admin_notes         : string | null;
+  created_at          : string;
+  updated_at          : string;
+}
+
+export interface OrderFee {
+  id             : string;
+  order_id       : string;
+  platform_fee   : number;
+  seller_payout  : number;
+  fee_percentage : number;
+  created_at     : string;
+}
+
+export interface SellerBalance {
+  seller_id         : string;
+  available_balance : number;
+  pending_balance   : number;
+  total_earnings    : number;
+  updated_at        : string;
+}
+
+export interface SellerPayout {
+  id             : string;
+  seller_id      : string;
+  amount         : number;
+  status         : 'pending' | 'processing' | 'completed' | 'failed';
+  payout_method  : string | null;
+  payout_details : Record<string, unknown> | null;
+  requested_at   : string;
+  processed_at   : string | null;
+  created_at     : string;
+}
+
+export interface AdminAuditLog {
+  id          : string;
+  admin_id    : string;
+  action_type : string;
+  target_type : string;
+  target_id   : string | null;
+  old_values  : Record<string, unknown> | null;
+  new_values  : Record<string, unknown> | null;
+  reason      : string | null;
+  ip_address  : string | null;
+  user_agent  : string | null;
+  created_at  : string;
 }
 
 /** Payload shape for order placement. Prices are NEVER trusted from this object. */

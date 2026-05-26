@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Users, Leaf, ShoppingBag, ShieldAlert } from 'lucide-react';
+import { Users, Leaf, ShoppingBag, ShieldAlert, DollarSign, Wallet } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 
 interface SystemOverviewCardProps {
@@ -11,6 +11,8 @@ interface SystemOverviewCardProps {
     totalSellers: number;
     totalProducts: number;
     totalCustomers: number;
+    platformRevenue: number;
+    pendingPayouts: number;
   };
 }
 
@@ -21,6 +23,18 @@ export function SystemOverviewCard({ stats }: SystemOverviewCardProps) {
       value: formatPrice(stats.totalSales),
       icon: ShoppingBag,
       color: 'bg-emerald-50 text-emerald-600',
+    },
+    {
+      title: 'Platform Fees',
+      value: formatPrice(stats.platformRevenue),
+      icon: DollarSign,
+      color: 'bg-purple-50 text-purple-600',
+    },
+    {
+      title: 'Pending Payouts',
+      value: formatPrice(stats.pendingPayouts),
+      icon: Wallet,
+      color: 'bg-orange-50 text-orange-600',
     },
     {
       title: 'Total Active Sellers',
@@ -43,7 +57,7 @@ export function SystemOverviewCard({ stats }: SystemOverviewCardProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-in fade-in-50 duration-200">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 animate-in fade-in-50 duration-200">
       {cards.map((card) => {
         const Icon = card.icon;
 

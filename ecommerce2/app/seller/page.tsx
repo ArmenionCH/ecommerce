@@ -53,10 +53,15 @@ export default function SellerDashboardPage() {
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Seller Dashboard</h1>
           <p className="text-sm text-gray-400 mt-1">Track sales, earnings, and how each product is performing.</p>
         </div>
-        <LinkButton href="/seller/inventory" className="gap-1.5 bg-emerald-600 hover:bg-emerald-500">
-          <PlusCircle className="w-4 h-4" />
-          Manage inventory
-        </LinkButton>
+        <div className="flex gap-2">
+          <LinkButton href="/seller/settings" variant="outline" className="gap-1.5">
+            Settings
+          </LinkButton>
+          <LinkButton href="/seller/inventory" className="gap-1.5 bg-emerald-600 hover:bg-emerald-500">
+            <PlusCircle className="w-4 h-4" />
+            Manage inventory
+          </LinkButton>
+        </div>
       </div>
 
       <FulfillmentStats metrics={metrics} />
