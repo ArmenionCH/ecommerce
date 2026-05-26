@@ -113,7 +113,7 @@ export default function AdminInsightsPage() {
       </div>
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-white rounded-2xl border border-gray-100 p-6">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-xl bg-emerald-50">
@@ -161,7 +161,7 @@ export default function AdminInsightsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setActiveTab('customers')}
           className={`px-4 py-2 rounded-xl text-xs font-bold border transition-colors ${
@@ -218,7 +218,7 @@ export default function AdminInsightsPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="bg-gray-50 rounded-lg p-3">
                       <p className="text-xs text-gray-500">Avg Order Value</p>
                       <p className="text-sm font-bold text-gray-900">{formatPrice(customer.average_order_value)}</p>

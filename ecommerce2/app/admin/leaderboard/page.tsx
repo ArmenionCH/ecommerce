@@ -100,7 +100,7 @@ export default function AdminLeaderboardPage() {
       </div>
 
       {/* Sort Options */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setSortBy('revenue')}
           className={`px-4 py-2 rounded-xl text-xs font-bold border transition-colors ${
@@ -176,7 +176,7 @@ export default function AdminLeaderboardPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+                <div className="grid grid-cols-2 gap-4 mt-4">
                   <div className="bg-emerald-50 rounded-lg p-3">
                     <p className="text-xs text-emerald-600 font-semibold">Total Revenue</p>
                     <p className="text-lg font-bold text-emerald-900">{formatPrice(seller.total_revenue)}</p>

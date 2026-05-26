@@ -120,8 +120,8 @@ export default function AdminAuditLogPage() {
           <div className="divide-y divide-gray-100">
             {filteredLogs.map((log) => (
               <div key={log.id} className="p-6 space-y-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-start gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                  <div className="flex items-start gap-4 w-full sm:w-auto">
                     <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
                       <Shield className="w-5 h-5 text-purple-600" />
                     </div>

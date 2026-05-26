@@ -133,7 +133,7 @@ export default function AdminPayoutsPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {(['all', 'pending', 'processing', 'completed', 'failed'] as const).map((status) => (
           <button
             key={status}
@@ -157,7 +157,7 @@ export default function AdminPayoutsPage() {
           <div className="divide-y divide-gray-100">
             {filteredPayouts.map((payout) => (
               <div key={payout.id} className="p-6 space-y-4">
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-gray-900">{payout.seller?.full_name || 'Unknown Seller'}</h3>
@@ -174,7 +174,7 @@ export default function AdminPayoutsPage() {
                       Phone: {payout.seller?.phone_number || 'N/A'} · Requested {new Date(payout.requested_at).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right sm:text-left sm:order-first order-last">
                     <p className="text-lg font-extrabold text-emerald-600">{formatPrice(payout.amount)}</p>
                     {payout.payout_method && (
                       <p className="text-xs text-gray-500 mt-1">{payout.payout_method}</p>

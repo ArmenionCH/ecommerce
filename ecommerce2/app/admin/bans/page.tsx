@@ -141,7 +141,7 @@ export default function AdminBansPage() {
             className="pl-10 h-11"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {(['all', 'banned', 'active'] as const).map((status) => (
             <button
               key={status}

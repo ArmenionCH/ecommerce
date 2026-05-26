@@ -15,6 +15,14 @@
   - Reject payouts
   - View payout details and status
 - [x] Link to payouts page added to admin dashboard
+- [x] Database schema for `refunds_disputes` table (refund and dispute tracking)
+- [x] Refund and dispute management page at `/admin/refunds`
+  - View refund and dispute requests
+  - Filter by status (pending, approved, rejected, processed)
+  - Approve/reject requests with admin notes
+  - Mark approved refunds as processed
+  - View refund amount and reason
+- [x] Link to refunds page added to admin dashboard
 
 #### Security & Auditing
 - [x] Database schema for `admin_audit_log` table (admin action tracking)
@@ -87,6 +95,7 @@
 - `order_fees` - Platform fee tracking
 - `seller_balances` - Seller balance management
 - `seller_payouts` - Payout requests
+- `refunds_disputes` - Refund and dispute tracking
 - `verification_requests` - Seller verification applications
 - `admin_audit_log` - Admin action logging
 - `product_metrics` - Product performance tracking
@@ -113,6 +122,7 @@
 - `SellerBalance` - Seller balance structure
 - `SellerPayout` - Payout request structure
 - `AdminAuditLog` - Admin audit log structure
+- `RefundDispute` - Refund and dispute structure
 
 ### Modified Interfaces
 - `Profile` - Added `is_verified`, `is_banned`, `ban_reason`, `banned_at` fields
@@ -125,10 +135,11 @@ The admin dashboard now includes links to:
 1. **Vendor Vetting** (`/admin/verifications`) - Seller verification management
 2. **User Bans** (`/admin/bans`) - User ban/unban management
 3. **Payouts** (`/admin/payouts`) - Seller payout management
-4. **Leaderboard** (`/admin/leaderboard`) - Seller performance rankings
-5. **Insights** (`/admin/insights`) - Buyer insights and analytics
-6. **Audit Log** (`/admin/audit-log`) - Admin action history
-7. **System Logs** (`/admin/system-logs`) - System logs (existing)
+4. **Refunds** (`/admin/refunds`) - Refund and dispute management
+5. **Leaderboard** (`/admin/leaderboard`) - Seller performance rankings
+6. **Insights** (`/admin/insights`) - Buyer insights and analytics
+7. **Audit Log** (`/admin/audit-log`) - Admin action history
+8. **System Logs** (`/admin/system-logs`) - System logs (existing)
 
 ---
 
@@ -175,6 +186,7 @@ The seller dashboard now includes:
 - `app/admin/verifications/page.tsx` - Seller verification management
 - `app/admin/bans/page.tsx` - User ban management
 - `app/admin/payouts/page.tsx` - Payout management
+- `app/admin/refunds/page.tsx` - Refund and dispute management
 - `app/admin/audit-log/page.tsx` - Admin audit log viewer
 - `app/admin/leaderboard/page.tsx` - Seller performance leaderboard
 - `app/admin/insights/page.tsx` - Buyer insights dashboard
@@ -198,7 +210,7 @@ The seller dashboard now includes:
 All SQL scripts for database schema changes have been provided and should be run in order:
 1. Profile table modifications (is_verified, is_banned, ban_reason, banned_at)
 2. Verification requests table
-3. Financial tracking tables (order_fees, seller_balances, seller_payouts)
+3. Financial tracking tables (order_fees, seller_balances, seller_payouts, refunds_disputes)
 4. Admin audit log table
 5. Advanced analytics tables (product_metrics, seller_performance, platform_health, customer_ltv, search_trends, user_retention, order_milestones)
 6. Storage bucket for verification documents

@@ -68,7 +68,7 @@ export function SignupForm({ onSuccess, onToggleForm }: SignupFormProps) {
   };
 
   return (
-    <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-lg border border-gray-100/80">
+    <div className="w-full max-w-md p-6 sm:p-8 bg-white rounded-2xl shadow-lg border border-gray-100/80">
       <div className="text-center mb-7">
         <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Create account</h2>
         <p className="text-sm text-gray-500 mt-1.5">

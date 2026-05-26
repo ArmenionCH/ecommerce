@@ -155,6 +155,22 @@ export interface AdminAuditLog {
   created_at  : string;
 }
 
+export interface RefundDispute {
+  id            : string;
+  order_id      : string;
+  customer_id   : string;
+  seller_id     : string;
+  refund_amount : number;
+  reason        : string;
+  status        : 'pending' | 'approved' | 'rejected' | 'processed';
+  dispute_type  : 'refund' | 'dispute' | 'return';
+  admin_notes   : string | null;
+  processed_by  : string | null;
+  processed_at  : string | null;
+  created_at    : string;
+  updated_at    : string;
+}
+
 /** Payload shape for order placement. Prices are NEVER trusted from this object. */
 export interface OrderPlacementPayload {
   customerId      : string;

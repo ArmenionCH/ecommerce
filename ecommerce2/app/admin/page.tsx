@@ -7,7 +7,7 @@ import { SystemOverviewCard } from '@/features/admin-control/components/SystemOv
 import { ModerationRow } from '@/features/admin-control/components/ModerationRow';
 import { deactivateProduct } from '@/features/admin-control/actions';
 import { Button } from '@/components/ui/button';
-import { Users, FileText, ArrowLeft, Ban, Wallet, Shield, Trophy, TrendingUp } from 'lucide-react';
+import { Users, FileText, ArrowLeft, Ban, Wallet, Shield, Trophy, TrendingUp, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import type { Product } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
@@ -151,46 +151,52 @@ export default function AdminDashboardPage() {
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight font-sans">Platform Control Panel</h1>
           <p className="text-sm text-gray-400 mt-1">Monitor platform-wide analytics and audit active crop listings.</p>
         </div>
-        <div className="flex gap-2.5">
+        <div className="flex flex-wrap gap-2.5">
           <Link href="/admin/verifications" passHref legacyBehavior>
-            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50">
-              <Users className="w-4.5 h-4.5 text-gray-500" />
+            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50 text-xs sm:text-sm">
+              <Users className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-gray-500" />
               Vendor Vetting
             </Button>
           </Link>
           <Link href="/admin/bans" passHref legacyBehavior>
-            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50">
-              <Ban className="w-4.5 h-4.5 text-gray-500" />
+            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50 text-xs sm:text-sm">
+              <Ban className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-gray-500" />
               User Bans
             </Button>
           </Link>
           <Link href="/admin/payouts" passHref legacyBehavior>
-            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50">
-              <Wallet className="w-4.5 h-4.5 text-gray-500" />
+            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50 text-xs sm:text-sm">
+              <Wallet className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-gray-500" />
               Payouts
             </Button>
           </Link>
+          <Link href="/admin/refunds" passHref legacyBehavior>
+            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50 text-xs sm:text-sm">
+              <RefreshCw className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-gray-500" />
+              Refunds
+            </Button>
+          </Link>
           <Link href="/admin/leaderboard" passHref legacyBehavior>
-            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50">
-              <Trophy className="w-4.5 h-4.5 text-gray-500" />
+            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50 text-xs sm:text-sm">
+              <Trophy className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-gray-500" />
               Leaderboard
             </Button>
           </Link>
           <Link href="/admin/insights" passHref legacyBehavior>
-            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50">
-              <TrendingUp className="w-4.5 h-4.5 text-gray-500" />
+            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50 text-xs sm:text-sm">
+              <TrendingUp className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-gray-500" />
               Insights
             </Button>
           </Link>
           <Link href="/admin/audit-log" passHref legacyBehavior>
-            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50">
-              <Shield className="w-4.5 h-4.5 text-gray-500" />
+            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50 text-xs sm:text-sm">
+              <Shield className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-gray-500" />
               Audit Log
             </Button>
           </Link>
           <Link href="/admin/system-logs" passHref legacyBehavior>
-            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50">
-              <FileText className="w-4.5 h-4.5 text-gray-500" />
+            <Button variant="outline" className="gap-1.5 border-gray-200 hover:bg-gray-50 text-xs sm:text-sm">
+              <FileText className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-gray-500" />
               System Logs
             </Button>
           </Link>
