@@ -21,6 +21,12 @@ export function profileFromSession(session: Session): Profile {
     delivery_address: null,
     metadata: {},
     created_at: session.user.created_at ?? new Date().toISOString(),
+
+    // Moderation fields — safe defaults for session-derived profiles
+    is_verified: false,
+    is_banned: false,
+    ban_reason: null,
+    banned_at: null,
   };
 }
 
