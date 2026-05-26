@@ -18,8 +18,8 @@ export const ORDER_STATUSES = {
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   placed     : 'Order Placed',
-  packed     : 'Being Packed',
-  to_receive : 'Out for Delivery',
+  packed     : 'On The Way',
+  to_receive : 'On The Way',
   received   : 'Delivered',
   cancelled  : 'Cancelled',
 };

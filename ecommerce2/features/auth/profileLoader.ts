@@ -24,8 +24,8 @@ export function profileFromSession(session: Session): Profile {
   };
 }
 
-// Global flag to prevent concurrent profile fetches
-let isFetchingProfile = false;
+// Map to track active profile fetches per user ID
+const activeFetches = new Map<string, Promise<Profile | null>>();
 
 /** Fetch profile with a hard timeout — never hangs the UI. */
 export async function fetchProfileWithRetry(
@@ -33,55 +33,63 @@ export async function fetchProfileWithRetry(
   session?: Session | null,
   maxAttempts = 2,           // reduced from 3 to prevent retry loops
 ): Promise<Profile | null> {
-  // Prevent concurrent fetches
-  if (isFetchingProfile) {
-    console.warn('[MarketHub] Profile fetch already in progress, skipping');
-    return session ? profileFromSession(session) : null;
+  // Check if there's already an active fetch for this user
+  const existingFetch = activeFetches.get(userId);
+  if (existingFetch) {
+    console.warn('[MarketHub] Profile fetch already in progress for user, waiting');
+    return existingFetch;
   }
 
-  isFetchingProfile = true;
+  // Create new fetch promise
+  const fetchPromise = (async () => {
+    try {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          const timeout = new Promise<null>((resolve) =>
+            setTimeout(() => resolve(null), 3000)  // reduced from 4000ms
+          );
 
-  try {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      try {
-        const timeout = new Promise<null>((resolve) =>
-          setTimeout(() => resolve(null), 3000)  // reduced from 4000ms
-        );
+          const query = supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle();
 
-        const query = supabaseClient
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle();
+          const result = await Promise.race([query, timeout]);
 
-        const result = await Promise.race([query, timeout]);
+          // timeout fired
+          if (result === null) {
+            console.warn(`[MarketHub] Profile attempt ${attempt + 1} timed out`);
+            continue;
+          }
 
-        // timeout fired
-        if (result === null) {
-          console.warn(`[MarketHub] Profile attempt ${attempt + 1} timed out`);
-          continue;
+          const { data: profile, error } = result;
+
+          if (profile) return profile as Profile;
+
+          if (error && error.code !== 'PGRST116') {
+            console.error('[MarketHub] Profile fetch error:', error.message);
+            break;
+          }
+        } catch (e) {
+          console.warn(`[MarketHub] Profile attempt ${attempt + 1} failed`, e);
         }
 
-        const { data: profile, error } = result;
-
-        if (profile) return profile as Profile;
-
-        if (error && error.code !== 'PGRST116') {
-          console.error('[MarketHub] Profile fetch error:', error.message);
-          break;
+        if (attempt < maxAttempts - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 500));  // increased from 300ms
         }
-      } catch (e) {
-        console.warn(`[MarketHub] Profile attempt ${attempt + 1} failed`, e);
       }
 
-      if (attempt < maxAttempts - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 500));  // increased from 300ms
-      }
+      // Always fall back to session metadata — never leave user stuck
+      return session ? profileFromSession(session) : null;
+    } finally {
+      // Remove from active fetches when done
+      activeFetches.delete(userId);
     }
+  })();
 
-    // Always fall back to session metadata — never leave user stuck
-    return session ? profileFromSession(session) : null;
-  } finally {
-    isFetchingProfile = false;
-  }
+  // Store the promise in the map
+  activeFetches.set(userId, fetchPromise);
+
+  return fetchPromise;
 }

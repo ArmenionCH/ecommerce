@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useUserSession } from '@/features/auth/hooks/useUserSession';
 import { useSellerOrders } from '@/features/orders/hooks/useSellerOrders';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ export default function SellerOrdersPage() {
   const { user, isLoading: isSessionLoading, hasAuthSession } = useUserSession();
   const sellerId = user && user.role === 'seller' ? user.id : null;
   const { orders, isLoading, unreadCount, approveOrder, rejectOrder } = useSellerOrders(sellerId);
+  const [activeTab, setActiveTab] = useState<'pending' | 'on_the_way' | 'rejected' | 'completed'>('pending');
 
   if (isSessionLoading || !hasAuthSession) {
     return <div className="p-8">Loading...</div>;
@@ -47,6 +48,21 @@ export default function SellerOrdersPage() {
     return styles[status as keyof typeof styles] || 'bg-gray-100 text-gray-700';
   };
 
+  const filteredOrders = orders.filter((order) => {
+    switch (activeTab) {
+      case 'pending':
+        return order.status === 'placed';
+      case 'on_the_way':
+        return order.status === 'to_receive';
+      case 'rejected':
+        return order.status === 'cancelled';
+      case 'completed':
+        return order.status === 'received';
+      default:
+        return true;
+    }
+  });
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
@@ -61,16 +77,43 @@ export default function SellerOrdersPage() {
         </p>
       </div>
 
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200 mb-6">
+        {[
+          { key: 'pending', label: 'Pending', count: orders.filter(o => o.status === 'placed').length },
+          { key: 'on_the_way', label: 'On The Way', count: orders.filter(o => o.status === 'to_receive').length },
+          { key: 'rejected', label: 'Rejected', count: orders.filter(o => o.status === 'cancelled').length },
+          { key: 'completed', label: 'Completed', count: orders.filter(o => o.status === 'received').length },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key as any)}
+            className={`pb-3 px-6 text-sm font-bold border-b-2 transition-all duration-200 cursor-pointer ${
+              activeTab === tab.key
+                ? 'border-emerald-600 text-emerald-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {tab.label}
+            {tab.count > 0 && (
+              <span className="ml-1.5 px-2 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 rounded-full">
+                {tab.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
       {isLoading ? (
         <div className="text-center py-12 text-gray-500">Loading orders...</div>
-      ) : orders.length === 0 ? (
+      ) : filteredOrders.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <p>No orders yet</p>
+          <p>No {activeTab} orders</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <div key={order.id} className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
               <div className="flex items-start justify-between mb-4">
                 <div>
@@ -131,11 +174,11 @@ export default function SellerOrdersPage() {
                 </div>
               )}
 
-              {order.status === 'packed' && (
+              {order.status === 'to_receive' && (
                 <div className="mt-4 p-3 bg-emerald-50 rounded-lg">
                   <p className="text-sm text-emerald-700 font-medium flex items-center gap-2">
                     <Package className="w-4 h-4" />
-                    Order approved and packed. Waiting for customer confirmation.
+                    Order is on the way.
                   </p>
                 </div>
               )}
@@ -144,7 +187,16 @@ export default function SellerOrdersPage() {
                 <div className="mt-4 p-3 bg-rose-50 rounded-lg">
                   <p className="text-sm text-rose-700 font-medium flex items-center gap-2">
                     <XCircle className="w-4 h-4" />
-                    Order rejected by seller.
+                    Order rejected.
+                  </p>
+                </div>
+              )}
+
+              {order.status === 'received' && (
+                <div className="mt-4 p-3 bg-emerald-50 rounded-lg">
+                  <p className="text-sm text-emerald-700 font-medium flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    Order completed.
                   </p>
                 </div>
               )}

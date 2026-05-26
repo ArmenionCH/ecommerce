@@ -18,6 +18,7 @@ export function useOrderStatus(customerId: string | null) {
     if (!customerId) return;
     setError(null);
     try {
+      console.log('[fetchOrders] Fetching orders for customer', customerId);
       const { data, error: err } = await supabaseClient
         .from('orders')
         .select('*, order_items(*)')
@@ -25,7 +26,10 @@ export function useOrderStatus(customerId: string | null) {
         .order('created_at', { ascending: false });
 
       if (err) throw err;
-      setOrders((data as Order[]) ?? []);
+      const orders = (data as Order[]) ?? [];
+      console.log('[fetchOrders] Fetched orders:', orders.length);
+      console.log('[fetchOrders] Order statuses:', orders.map(o => ({ id: o.id, status: o.status })));
+      setOrders(orders);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to fetch orders.');
     } finally {
@@ -72,5 +76,46 @@ export function useOrderStatus(customerId: string | null) {
     };
   }, [customerId, fetchOrders, isVisible]);
 
-  return { orders, isLoading, error, refreshOrders: fetchOrders };
+  const cancelOrder = useCallback(async (orderId: number) => {
+    if (!customerId) return;
+    try {
+      console.log('[cancelOrder] Attempting to cancel order', orderId, 'for customer', customerId);
+
+      const { data, error, count } = await supabaseClient
+        .from('orders')
+        .update({ status: 'cancelled' })
+        .eq('id', orderId)
+        .eq('customer_id', customerId)
+        .select();
+
+      console.log('[cancelOrder] Update result:', { data, error, count });
+
+      if (error) {
+        console.error('[cancelOrder] Database error:', error);
+        throw error;
+      }
+
+      if (count === 0) {
+        console.error('[cancelOrder] No rows updated - order may not exist or customer_id mismatch');
+        throw new Error('Order not found or permission denied');
+      }
+
+      console.log('[cancelOrder] Successfully cancelled order', orderId, 'refreshing orders...');
+
+      // Refresh orders after update
+      await fetchOrders();
+
+      console.log('[cancelOrder] Orders refreshed, dispatching event...');
+
+      // Dispatch event to sync across components
+      window.dispatchEvent(new Event('orders-updated'));
+
+      console.log('[cancelOrder] Event dispatched');
+    } catch (e) {
+      console.error('[cancelOrder] Failed to cancel order:', e);
+      throw e;
+    }
+  }, [customerId, fetchOrders]);
+
+  return { orders, isLoading, error, refreshOrders: fetchOrders, cancelOrder };
 }

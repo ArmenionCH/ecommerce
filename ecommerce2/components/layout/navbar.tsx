@@ -6,6 +6,7 @@ import { ShoppingCart, LogOut, ShieldAlert, Store, ShoppingBag, Menu, X } from '
 import { useUserSession } from '@/features/auth/hooks/useUserSession';
 import { signOut } from '@/features/auth/authClient';
 import { useCartActions } from '@/features/cart/hooks/useCartActions';
+import { useSellerOrders } from '@/features/orders/hooks/useSellerOrders';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { SigninForm } from '@/features/auth/components/SigninForm';
@@ -24,6 +25,10 @@ export function Navbar() {
   const customerId = user && user.role === 'customer' ? user.id : null;
   const { cartItems } = useCartActions(customerId);
   const cartCount = cartItems.length; // Count unique items, not total quantity
+
+  // Hook seller orders for notification badge
+  const sellerId = user && user.role === 'seller' ? user.id : null;
+  const { unreadCount: sellerUnreadCount } = useSellerOrders(sellerId);
 
   const handleSignOut = async () => {
     await signOut();
@@ -66,6 +71,17 @@ export function Navbar() {
                   <Link href="/seller" className="text-sm font-semibold text-gray-600 hover:text-emerald-600 transition-colors flex items-center gap-1.5">
                     <Store className="w-4 h-4" />
                     Seller Center
+                  </Link>
+                )}
+                {isSeller && (
+                  <Link href="/seller/orders" className="text-sm font-semibold text-gray-600 hover:text-emerald-600 transition-colors flex items-center gap-1.5 relative">
+                    <ShoppingBag className="w-4 h-4" />
+                    Orders
+                    {sellerUnreadCount > 0 && (
+                      <span className="absolute -top-1 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white shadow-sm">
+                        {sellerUnreadCount}
+                      </span>
+                    )}
                   </Link>
                 )}
                 {isAdmin && (

@@ -23,7 +23,7 @@ export function useSellerOrders(sellerId: string | null) {
       const { data, error: err } = await supabaseClient
         .from('orders')
         .select('*, order_items(*)')
-        .in('status', ['placed', 'packed', 'to_receive'])
+        .in('status', ['placed', 'to_receive'])
         .order('created_at', { ascending: false });
 
       if (err) throw err;
@@ -70,7 +70,59 @@ export function useSellerOrders(sellerId: string | null) {
   }, [fetchOrders]);
 
   const approveOrder = useCallback(async (orderId: number, sellerId: string) => {
-    await updateOrderStatus(orderId, 'packed', sellerId);
+    try {
+      // First, get the order items to update inventory
+      const { data: order, error: orderError } = await supabaseClient
+        .from('orders')
+        .select('order_items(*)')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Update inventory for each item in the order
+      for (const item of order.order_items || []) {
+        if (item.seller_id === sellerId) {
+          // Update product stock
+          const { data: product } = await supabaseClient
+            .from('products')
+            .select('stock_quantity')
+            .eq('id', item.product_id)
+            .single();
+
+          if (product) {
+            const newStock = Math.max(0, product.stock_quantity - item.quantity);
+            await supabaseClient
+              .from('products')
+              .update({ stock_quantity: newStock })
+              .eq('id', item.product_id);
+          }
+
+          // Update variation stock if applicable
+          if (item.variation_details) {
+            const { data: variation } = await supabaseClient
+              .from('product_variations')
+              .select('stock_quantity')
+              .eq('id', item.product_id)
+              .single();
+
+            if (variation) {
+              const newVarStock = Math.max(0, variation.stock_quantity - item.quantity);
+              await supabaseClient
+                .from('product_variations')
+                .update({ stock_quantity: newVarStock })
+                .eq('id', item.product_id);
+            }
+          }
+        }
+      }
+
+      // Then update order status to "on the way"
+      await updateOrderStatus(orderId, 'to_receive', sellerId);
+    } catch (e) {
+      console.error('Failed to approve order:', e);
+      throw e;
+    }
   }, [updateOrderStatus]);
 
   const rejectOrder = useCallback(async (orderId: number, sellerId: string) => {
@@ -86,9 +138,14 @@ export function useSellerOrders(sellerId: string | null) {
 
     fetchOrders();
 
+    // Listen for orders-updated events from other components
+    const handleUpdate = () => fetchOrders();
+    window.addEventListener('orders-updated', handleUpdate);
+
     // Set up Realtime subscription for new orders
+    const channelName = `seller_orders_realtime_${sellerId}_${Date.now()}`;
     const channel = supabaseClient
-      .channel(`seller_orders_realtime_${sellerId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -117,9 +174,16 @@ export function useSellerOrders(sellerId: string | null) {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[SellerOrders] Realtime subscription established');
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          console.log('[SellerOrders] Realtime subscription closed/error');
+        }
+      });
 
     return () => {
+      window.removeEventListener('orders-updated', handleUpdate);
       supabaseClient.removeChannel(channel);
     };
   }, [sellerId, fetchOrders, isVisible]);

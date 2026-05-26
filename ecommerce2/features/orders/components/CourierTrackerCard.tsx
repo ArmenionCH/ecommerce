@@ -5,20 +5,22 @@ import type { Order } from '@/lib/types';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle2, Package, Truck, Smile, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Package, Truck, Smile, AlertCircle, X } from 'lucide-react';
 import { ORDER_STATUS_LABELS } from '@/lib/constants';
+import { Button } from '@/components/ui/button';
 
 interface CourierTrackerCardProps {
   order: Order;
+  onCancelOrder?: (orderId: number) => void;
 }
 
-export function CourierTrackerCard({ order }: CourierTrackerCardProps) {
+export function CourierTrackerCard({ order, onCancelOrder }: CourierTrackerCardProps) {
   const { order_items: items = [], status, created_at, id, total_amount } = order;
+  const [isCancelling, setIsCancelling] = React.useState(false);
 
   // Courier timeline steps based on order status
   const steps = [
     { label: 'Placed', statusKey: 'placed', icon: CheckCircle2 },
-    { label: 'Packed', statusKey: 'packed', icon: Package },
     { label: 'On The Way', statusKey: 'to_receive', icon: Truck },
     { label: 'Delivered', statusKey: 'received', icon: Smile },
   ];
@@ -28,8 +30,8 @@ export function CourierTrackerCard({ order }: CourierTrackerCardProps) {
     const statusIndices: Record<string, number> = {
       placed: 0,
       packed: 1,
-      to_receive: 2,
-      received: 3,
+      to_receive: 1,
+      received: 2,
       cancelled: -1,
     };
 
@@ -78,7 +80,7 @@ export function CourierTrackerCard({ order }: CourierTrackerCardProps) {
             <div className="relative flex items-center justify-between max-w-md mx-auto">
               {/* Connector line behind steps */}
               <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-gray-100 -z-1" />
-              
+
               {steps.map((step, idx) => {
                 const state = getStepState(idx);
                 const StepIcon = step.icon;
@@ -110,6 +112,28 @@ export function CourierTrackerCard({ order }: CourierTrackerCardProps) {
           <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-700 text-sm max-w-md mx-auto">
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <p className="font-semibold">This order has been cancelled and will not be delivered.</p>
+          </div>
+        )}
+
+        {/* Cancel button for waiting approval orders */}
+        {status === 'placed' && onCancelOrder && (
+          <div className="mt-4">
+            <Button
+              variant="outline"
+              className="w-full border-rose-200 text-rose-600 hover:bg-rose-50"
+              disabled={isCancelling}
+              onClick={async () => {
+                setIsCancelling(true);
+                try {
+                  await onCancelOrder(id);
+                } finally {
+                  setIsCancelling(false);
+                }
+              }}
+            >
+              <X className="w-4 h-4 mr-2" />
+              {isCancelling ? 'Cancelling...' : 'Cancel Order'}
+            </Button>
           </div>
         )}
 
