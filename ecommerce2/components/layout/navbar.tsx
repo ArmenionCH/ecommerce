@@ -23,7 +23,7 @@ export function Navbar() {
   // Safely hook cart items. If no user or user is not a customer, hook is safe
   const customerId = user && user.role === 'customer' ? user.id : null;
   const { cartItems } = useCartActions(customerId);
-  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const cartCount = cartItems.length; // Count unique items, not total quantity
 
   const handleSignOut = async () => {
     await signOut();

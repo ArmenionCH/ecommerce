@@ -18,3 +18,17 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Pause animations and transitions when page is hidden (tab switch/minimize) */
+body.page-hidden *,
+body.page-hidden *::before,
+body.page-hidden *::after {
+  animation-play-state: paused !important;
+  transition-duration: 0s !important;
+}
+
+/* Optimize rendering when page is not visible */
+body.page-hidden {
+  contain: strict;
+  content-visibility: auto;
+}

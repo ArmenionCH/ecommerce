@@ -3,13 +3,18 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabaseClient } from '@/lib/supabase';
 import type { Order } from '@/lib/types';
+import { usePageVisibility } from '@/components/layout/PageVisibilityProvider';
 
 export function useOrderStatus(customerId: string | null) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isVisible = usePageVisibility();
 
   const fetchOrders = useCallback(async () => {
+    // Don't fetch if tab is hidden
+    if (!isVisible) return;
+
     if (!customerId) return;
     setError(null);
     try {
@@ -26,7 +31,7 @@ export function useOrderStatus(customerId: string | null) {
     } finally {
       setIsLoading(false);
     }
-  }, [customerId]);
+  }, [customerId, isVisible]);
 
   useEffect(() => {
     if (!customerId) {
@@ -54,8 +59,10 @@ export function useOrderStatus(customerId: string | null) {
           filter: `customer_id=eq.${customerId}`,
         },
         async () => {
-          // Trigger a re-fetch of orders to get updated statuses and associations
-          await fetchOrders();
+          // Only re-fetch if tab is visible
+          if (isVisible) {
+            await fetchOrders();
+          }
         }
       )
       .subscribe();
@@ -63,7 +70,7 @@ export function useOrderStatus(customerId: string | null) {
     return () => {
       supabaseClient.removeChannel(channel);
     };
-  }, [customerId, fetchOrders]);
+  }, [customerId, fetchOrders, isVisible]);
 
   return { orders, isLoading, error, refreshOrders: fetchOrders };
 }

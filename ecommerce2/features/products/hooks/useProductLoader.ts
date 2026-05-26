@@ -5,13 +5,18 @@ import { supabaseClient } from '@/lib/supabase';
 import { baseFeed } from '../utils/baseFeed';
 import { textSimilarity } from '../utils/textSimilarity';
 import type { Product, ProductVariation } from '@/lib/types';
+import { usePageVisibility } from '@/components/layout/PageVisibilityProvider';
 
 export function useProductLoader() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isVisible = usePageVisibility();
 
   const loadFeed = useCallback(async (limit = 20) => {
+    // Don't load if tab is hidden
+    if (!isVisible) return;
+
     setIsLoading(true);
     setError(null);
     try {
@@ -22,9 +27,12 @@ export function useProductLoader() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isVisible]);
 
   const searchProducts = useCallback(async (queryText: string) => {
+    // Don't search if tab is hidden
+    if (!isVisible) return;
+
     if (!queryText.trim()) {
       await loadFeed();
       return;
@@ -42,7 +50,7 @@ export function useProductLoader() {
       // Fallback: simple case-insensitive substring match
       const { data, error: fetchErr } = await supabaseClient
         .from('products')
-        .select('*')
+        .select('*, profiles!inner(full_name)')
         .eq('is_active', true)
         .ilike('title', `%${queryText}%`);
 
@@ -53,15 +61,18 @@ export function useProductLoader() {
     } finally {
       setIsLoading(false);
     }
-  }, [loadFeed]);
+  }, [loadFeed, isVisible]);
 
   const loadProductWithVariations = useCallback(async (id: number) => {
+    // Don't load if tab is hidden
+    if (!isVisible) return null;
+
     setIsLoading(true);
     setError(null);
     try {
       const { data: product, error: prodErr } = await supabaseClient
         .from('products')
-        .select('*')
+        .select('*, profiles!inner(full_name)')
         .eq('id', id)
         .single();
 
@@ -84,7 +95,7 @@ export function useProductLoader() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isVisible]);
 
   return {
     products,

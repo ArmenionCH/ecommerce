@@ -6,14 +6,20 @@ import { ProductGrid } from '@/features/products/components/ProductGrid';
 import { Input } from '@/components/ui/input';
 import { Search, Sparkles } from 'lucide-react';
 import { MarketplaceGate } from '@/features/auth/components/MarketplaceGate';
+import { usePageVisibility } from '@/components/layout/PageVisibilityProvider';
 
 export default function MarketplaceHome() {
   const { products, isLoading, loadFeed, searchProducts } = useProductLoader();
   const [searchQuery, setSearchQuery] = useState('');
+  const isVisible = usePageVisibility();
 
   useEffect(() => {
-    loadFeed();
-  }, [loadFeed]);
+    // Only load feed when page is visible
+    if (isVisible) {
+      loadFeed();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVisible]); // Only depend on isVisible, not loadFeed
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;

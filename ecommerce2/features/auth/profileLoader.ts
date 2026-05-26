@@ -24,50 +24,64 @@ export function profileFromSession(session: Session): Profile {
   };
 }
 
+// Global flag to prevent concurrent profile fetches
+let isFetchingProfile = false;
+
 /** Fetch profile with a hard timeout — never hangs the UI. */
 export async function fetchProfileWithRetry(
   userId: string,
   session?: Session | null,
-  maxAttempts = 3,           // reduced from 6
+  maxAttempts = 2,           // reduced from 3 to prevent retry loops
 ): Promise<Profile | null> {
-
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    try {
-      const timeout = new Promise<null>((resolve) =>
-        setTimeout(() => resolve(null), 4000)
-      );
-
-      const query = supabaseClient
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      const result = await Promise.race([query, timeout]);
-
-      // timeout fired
-      if (result === null) {
-        console.warn(`[MarketHub] Profile attempt ${attempt + 1} timed out`);
-        continue;
-      }
-
-      const { data: profile, error } = result;
-
-      if (profile) return profile as Profile;
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('[MarketHub] Profile fetch error:', error.message);
-        break;
-      }
-    } catch (e) {
-      console.warn(`[MarketHub] Profile attempt ${attempt + 1} failed`, e);
-    }
-
-    if (attempt < maxAttempts - 1) {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-    }
+  // Prevent concurrent fetches
+  if (isFetchingProfile) {
+    console.warn('[MarketHub] Profile fetch already in progress, skipping');
+    return session ? profileFromSession(session) : null;
   }
 
-  // Always fall back to session metadata — never leave user stuck
-  return session ? profileFromSession(session) : null;
+  isFetchingProfile = true;
+
+  try {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const timeout = new Promise<null>((resolve) =>
+          setTimeout(() => resolve(null), 3000)  // reduced from 4000ms
+        );
+
+        const query = supabaseClient
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+
+        const result = await Promise.race([query, timeout]);
+
+        // timeout fired
+        if (result === null) {
+          console.warn(`[MarketHub] Profile attempt ${attempt + 1} timed out`);
+          continue;
+        }
+
+        const { data: profile, error } = result;
+
+        if (profile) return profile as Profile;
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('[MarketHub] Profile fetch error:', error.message);
+          break;
+        }
+      } catch (e) {
+        console.warn(`[MarketHub] Profile attempt ${attempt + 1} failed`, e);
+      }
+
+      if (attempt < maxAttempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 500));  // increased from 300ms
+      }
+    }
+
+    // Always fall back to session metadata — never leave user stuck
+    return session ? profileFromSession(session) : null;
+  } finally {
+    isFetchingProfile = false;
+  }
 }

@@ -109,6 +109,11 @@ export function ProductDetailView({ product, variations }: ProductDetailViewProp
                 Verified seller
               </span>
               <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{product.title}</h1>
+              {product.profiles?.full_name && (
+                <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                  <span className="font-semibold">Sold by</span> {product.profiles.full_name}
+                </p>
+              )}
             </div>
 
             <div className="text-2xl font-black text-emerald-600">

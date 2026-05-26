@@ -87,6 +87,11 @@ export function ProductCard({ product }: ProductCardProps) {
             <p className="text-xs text-gray-400 mt-0.5 line-clamp-2 min-h-[2rem]">
               {product.description || 'No description provided.'}
             </p>
+            {product.profiles?.full_name && (
+              <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                <span className="font-semibold">by</span> {product.profiles.full_name}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-gray-50">

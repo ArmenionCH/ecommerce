@@ -20,7 +20,7 @@ import type { Product }   from '@/lib/types';
 export async function baseFeed(limit = 20): Promise<Product[]> {
   const { data, error } = await supabaseClient
     .from('products')
-    .select('*')
+    .select('*, profiles!inner(full_name)')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
     .limit(limit);
